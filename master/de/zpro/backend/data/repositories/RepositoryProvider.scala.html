@@ -1,0 +1,455 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/repositories/RepositoryProvider.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.repositories
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.DatabaseRequester
+</span>4 <span style=''>import de.zpro.backend.util.Extensions.OptionIterable
+</span>5 <span style=''>
+</span>6 <span style=''>import scala.concurrent.duration.DurationInt
+</span>7 <span style=''>import scala.concurrent.{Await, ExecutionContext}
+</span>8 <span style=''>import scala.language.postfixOps
+</span>9 <span style=''>
+</span>10 <span style=''>object RepositoryProvider {
+</span>11 <span style=''>  // $COVERAGE-OFF$ requires database connection
+</span>12 <span style=''>  def apply(connector: DatabaseRequester)(implicit executionContext: ExecutionContext): RepositoryProvider =
+</span>13 <span style=''>    new RepositoryProvider(connector, new PropertyRepository(connector))
+</span>14 <span style=''>  // $COVERAGE-ON$
+</span>15 <span style=''>
+</span>16 <span style=''>  def apply(connector: DatabaseRequester, propertyRepository: PropertyRepository)(implicit executionContext: ExecutionContext): RepositoryProvider =
+</span>17 <span style=''>    </span><span style='background: #AEF1AE'>new RepositoryProvider(connector, propertyRepository)</span><span style=''>
+</span>18 <span style=''>}
+</span>19 <span style=''>
+</span>20 <span style=''>class RepositoryProvider(connector: DatabaseRequester, val propertyRepository: PropertyRepository)(implicit executionContext: ExecutionContext) {
+</span>21 <span style=''>  val dataRepository: DataRepository = </span><span style='background: #AEF1AE'>buildDataRepository(propertyRepository)</span><span style=''>
+</span>22 <span style=''>  val searchRepository: SearchRepository = </span><span style='background: #AEF1AE'>SearchRepository(connector)</span><span style=''>
+</span>23 <span style=''>
+</span>24 <span style=''>  private def buildDataRepository(propertyRepository: PropertyRepository): DataRepository = {
+</span>25 <span style=''>    val properties: List[Property] = </span><span style='background: #AEF1AE'>Await.result(propertyRepository.loadProperties, 10 seconds)</span><span style=''>
+</span>26 <span style=''>    val transformers: List[PropertyTransformer] = </span><span style='background: #AEF1AE'>properties.map(_.transformer).collectDefined</span><span style=''>
+</span>27 <span style=''>    </span><span style='background: #AEF1AE'>DataRepository(connector, transformers)</span><span style=''>
+</span>28 <span style=''>  }
+</span>29 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          341
+        </td>
+        <td>
+          705
+          -
+          758
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.&lt;init&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          new RepositoryProvider(connector, propertyRepository)(executionContext)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          343
+        </td>
+        <td>
+          947
+          -
+          986
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.buildDataRepository
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.buildDataRepository(RepositoryProvider.this.propertyRepository)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          342
+        </td>
+        <td>
+          967
+          -
+          985
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.propertyRepository
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.propertyRepository
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          346
+        </td>
+        <td>
+          1030
+          -
+          1057
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.apply(RepositoryProvider.this.connector)(RepositoryProvider.this.executionContext)
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          345
+        </td>
+        <td>
+          1046
+          -
+          1046
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.executionContext
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.executionContext
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          344
+        </td>
+        <td>
+          1047
+          -
+          1056
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.connector
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.connector
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          349
+        </td>
+        <td>
+          1238
+          -
+          1248
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.concurrent.duration.DurationConversions.seconds
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.duration.`package`.DurationInt(10).seconds
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          348
+        </td>
+        <td>
+          1238
+          -
+          1240
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          10
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          350
+        </td>
+        <td>
+          1190
+          -
+          1249
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.concurrent.Await.result
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Await.result[List[de.zpro.backend.data.repositories.Property]](propertyRepository.loadProperties, scala.concurrent.duration.`package`.DurationInt(10).seconds)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          347
+        </td>
+        <td>
+          1203
+          -
+          1236
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.loadProperties
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          propertyRepository.loadProperties
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          352
+        </td>
+        <td>
+          1300
+          -
+          1344
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionIterable.collectDefined
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.util.Extensions.OptionIterable[de.zpro.backend.data.repositories.PropertyTransformer, List, Option](properties.map[Option[de.zpro.backend.data.repositories.PropertyTransformer]](((x$1: de.zpro.backend.data.repositories.Property) =&gt; x$1.transformer))).collectDefined
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          351
+        </td>
+        <td>
+          1300
+          -
+          1329
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          properties.map[Option[de.zpro.backend.data.repositories.PropertyTransformer]](((x$1: de.zpro.backend.data.repositories.Property) =&gt; x$1.transformer))
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          355
+        </td>
+        <td>
+          1363
+          -
+          1363
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.executionContext
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.executionContext
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          354
+        </td>
+        <td>
+          1349
+          -
+          1349
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.apply$default$3
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.apply$default$3
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          353
+        </td>
+        <td>
+          1364
+          -
+          1373
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.RepositoryProvider.connector
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          RepositoryProvider.this.connector
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          356
+        </td>
+        <td>
+          1349
+          -
+          1388
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.apply(RepositoryProvider.this.connector, transformers, DataRepository.apply$default$3)(RepositoryProvider.this.executionContext)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
