@@ -11,7 +11,7 @@
             const folders = await kit.rest.repos.getContent({
                 owner: 'Tolger',
                 repo: 'zpro',
-                branch: 'gh-pages'
+                ref: 'gh-pages'
             });
             console.log(folders.data.map((folder) => folder.name))
         </script>
