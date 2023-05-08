@@ -1,0 +1,1011 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/repositories/DataRepository.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.repositories
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.{DatabaseRequester, DbResult, RequestObject, RequestObjectParser}
+</span>4 <span style=''>import de.zpro.backend.exceptions.{ParsingException, UnknownChildNameException}
+</span>5 <span style=''>import sangria.schema.ProjectedName
+</span>6 <span style=''>
+</span>7 <span style=''>import scala.concurrent.{ExecutionContext, Future}
+</span>8 <span style=''>import scala.util.{Failure, Success}
+</span>9 <span style=''>
+</span>10 <span style=''>case class DataRepository(requester: DatabaseRequester, transformers: List[PropertyTransformer] = List.empty, parser: RequestObjectParser = RequestObject)(implicit val context: ExecutionContext) {
+</span>11 <span style=''>  def dog(id: String, args: Vector[ProjectedName]): Future[Option[DbResult]] =
+</span>12 <span style=''>    </span><span style='background: #AEF1AE'>dbRequest(&quot;Dog&quot;, id, args)</span><span style=''>
+</span>13 <span style=''>
+</span>14 <span style=''>  def litter(id: String, args: Vector[ProjectedName]): Future[Option[DbResult]] =
+</span>15 <span style=''>    </span><span style='background: #AEF1AE'>dbRequest(&quot;Litter&quot;, id, args)</span><span style=''>
+</span>16 <span style=''>
+</span>17 <span style=''>  def kennel(id: String, args: Vector[ProjectedName]): Future[Option[DbResult]] =
+</span>18 <span style=''>    </span><span style='background: #AEF1AE'>dbRequest(&quot;Kennel&quot;, id, args)</span><span style=''>
+</span>19 <span style=''>
+</span>20 <span style=''>  def person(id: String, args: Vector[ProjectedName]): Future[Option[DbResult]] =
+</span>21 <span style=''>    </span><span style='background: #AEF1AE'>dbRequest(&quot;Person&quot;, id, args)</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>  private def dbRequest(dataType: String, id: String, fields: Vector[ProjectedName]): Future[Option[DbResult]] =
+</span>24 <span style=''>    </span><span style='background: #AEF1AE'>parser.fromGraphqlFields(dataType, fields)</span><span style=''> match {
+</span>25 <span style=''>      case Success(request) =&gt; </span><span style='background: #AEF1AE'>performRequest(request, id)</span><span style=''>
+</span>26 <span style=''>      case Failure(e: UnknownChildNameException) =&gt; </span><span style='background: #AEF1AE'>Future.failed(ParsingException(e.message, e))</span><span style=''>
+</span>27 <span style=''>      case Failure(e) =&gt; </span><span style='background: #AEF1AE'>Future.failed(e)</span><span style=''>
+</span>28 <span style=''>    }
+</span>29 <span style=''>
+</span>30 <span style=''>  private def performRequest(request: RequestObject, id: String): Future[Option[DbResult]] =
+</span>31 <span style=''>    </span><span style='background: #AEF1AE'>requester.getNodeById(request, id)
+</span>32 <span style=''></span><span style='background: #AEF1AE'>      .map(_.map(processDogs))</span><span style=''>
+</span>33 <span style=''>
+</span>34 <span style=''>  private def processDogs(result: DbResult): DbResult = {
+</span>35 <span style=''>    if (</span><span style='background: #AEF1AE'>result.dataType == &quot;Dog&quot;</span><span style=''>)
+</span>36 <span style=''>      </span><span style='background: #AEF1AE'>result.copy(
+</span>37 <span style=''></span><span style='background: #AEF1AE'>        properties = transformers.foldLeft(result.properties)((toProcess, processor) =&gt; processor.processDog(toProcess)),
+</span>38 <span style=''></span><span style='background: #AEF1AE'>        nodes = result.nodes.view.mapValues(_.map(processDogs)).toMap
+</span>39 <span style=''></span><span style='background: #AEF1AE'>      )</span><span style=''>
+</span>40 <span style=''>    else
+</span>41 <span style=''>      </span><span style='background: #AEF1AE'>result.copy(
+</span>42 <span style=''></span><span style='background: #AEF1AE'>        nodes = result.nodes.view.mapValues(_.map(processDogs)).toMap
+</span>43 <span style=''></span><span style='background: #AEF1AE'>      )</span><span style=''>
+</span>44 <span style=''>  }
+</span>45 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          201
+        </td>
+        <td>
+          623
+          -
+          649
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.dbRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.dbRequest(&quot;Dog&quot;, id, args)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          202
+        </td>
+        <td>
+          737
+          -
+          766
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.dbRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.dbRequest(&quot;Litter&quot;, id, args)
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          203
+        </td>
+        <td>
+          854
+          -
+          883
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.dbRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.dbRequest(&quot;Kennel&quot;, id, args)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          204
+        </td>
+        <td>
+          971
+          -
+          1000
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.dbRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.dbRequest(&quot;Person&quot;, id, args)
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          205
+        </td>
+        <td>
+          1119
+          -
+          1161
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObjectParser.fromGraphqlFields
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.parser.fromGraphqlFields(dataType, fields)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          207
+        </td>
+        <td>
+          1201
+          -
+          1228
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.performRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.performRequest(request, id)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          206
+        </td>
+        <td>
+          1201
+          -
+          1228
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.performRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.performRequest(request, id)
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          209
+        </td>
+        <td>
+          1295
+          -
+          1325
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.exceptions.ParsingException.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.exceptions.ParsingException.apply(e.message, e)
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          211
+        </td>
+        <td>
+          1281
+          -
+          1326
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](de.zpro.backend.exceptions.ParsingException.apply(e.message, e))
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          208
+        </td>
+        <td>
+          1312
+          -
+          1321
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.exceptions.UnknownChildNameException.message
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          e.message
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          210
+        </td>
+        <td>
+          1281
+          -
+          1326
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](de.zpro.backend.exceptions.ParsingException.apply(e.message, e))
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          213
+        </td>
+        <td>
+          1352
+          -
+          1368
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](e)
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          212
+        </td>
+        <td>
+          1352
+          -
+          1368
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](e)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          214
+        </td>
+        <td>
+          1525
+          -
+          1536
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.processDogs
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.processDogs(result)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          217
+        </td>
+        <td>
+          1473
+          -
+          1538
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.requester.getNodeById(request, id).map[Option[de.zpro.backend.data.DbResult]](((x$1: Option[de.zpro.backend.data.DbResult]) =&gt; x$1.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result)))))(DataRepository.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          216
+        </td>
+        <td>
+          1518
+          -
+          1518
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.context
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.context
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          215
+        </td>
+        <td>
+          1519
+          -
+          1537
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Option.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$1.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result)))
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          218
+        </td>
+        <td>
+          1606
+          -
+          1630
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.Object.==
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.dataType.==(&quot;Dog&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          227
+        </td>
+        <td>
+          1645
+          -
+          1645
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy$default$3
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          226
+        </td>
+        <td>
+          1645
+          -
+          1645
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy$default$1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy$default$1
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          229
+        </td>
+        <td>
+          1638
+          -
+          1850
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          {
+  &lt;artifact&gt; val x$1: Map[String,org.neo4j.driver.Value] @scala.reflect.internal.annotations.uncheckedBounds = DataRepository.this.transformers.foldLeft[Map[String,org.neo4j.driver.Value]](result.properties)(((toProcess: Map[String,org.neo4j.driver.Value], processor: de.zpro.backend.data.repositories.PropertyTransformer) =&gt; processor.processDog(toProcess)));
+  &lt;artifact&gt; val x$2: scala.collection.immutable.Map[String,List[de.zpro.backend.data.DbResult]] @scala.reflect.internal.annotations.uncheckedBounds = result.nodes.view.mapValues[List[de.zpro.backend.data.DbResult]](((x$2: List[de.zpro.backend.data.DbResult]) =&gt; x$2.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result))))).toMap[String, List[de.zpro.backend.data.DbResult]](scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])]);
+  &lt;artifact&gt; val x$3: String = result.copy$default$1;
+  &lt;artifact&gt; val x$4: Map[String,List[org.neo4j.driver.Value]] @scala.reflect.internal.annotations.uncheckedBounds = result.copy$default$3;
+  result.copy(x$3, x$1, x$4, x$2)
+}
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          228
+        </td>
+        <td>
+          1638
+          -
+          1850
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy(x$3, x$1, x$4, x$2)
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          220
+        </td>
+        <td>
+          1739
+          -
+          1770
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyTransformer.processDog
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          processor.processDog(toProcess)
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          219
+        </td>
+        <td>
+          1694
+          -
+          1711
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.properties
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.properties
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          221
+        </td>
+        <td>
+          1672
+          -
+          1771
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.LinearSeqOps.foldLeft
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.transformers.foldLeft[Map[String,org.neo4j.driver.Value]](result.properties)(((toProcess: Map[String,org.neo4j.driver.Value], processor: de.zpro.backend.data.repositories.PropertyTransformer) =&gt; processor.processDog(toProcess)))
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          223
+        </td>
+        <td>
+          1817
+          -
+          1835
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$2.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result)))
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          225
+        </td>
+        <td>
+          1789
+          -
+          1842
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.nodes.view.mapValues[List[de.zpro.backend.data.DbResult]](((x$2: List[de.zpro.backend.data.DbResult]) =&gt; x$2.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result))))).toMap[String, List[de.zpro.backend.data.DbResult]](scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])])
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          222
+        </td>
+        <td>
+          1823
+          -
+          1834
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.processDogs
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.processDogs(result)
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          224
+        </td>
+        <td>
+          1837
+          -
+          1837
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])]
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          236
+        </td>
+        <td>
+          1873
+          -
+          1873
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy$default$3
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          235
+        </td>
+        <td>
+          1873
+          -
+          1873
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy$default$2
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy$default$2
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          238
+        </td>
+        <td>
+          1866
+          -
+          1956
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          {
+  &lt;artifact&gt; val x$5: scala.collection.immutable.Map[String,List[de.zpro.backend.data.DbResult]] @scala.reflect.internal.annotations.uncheckedBounds = result.nodes.view.mapValues[List[de.zpro.backend.data.DbResult]](((x$3: List[de.zpro.backend.data.DbResult]) =&gt; x$3.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result))))).toMap[String, List[de.zpro.backend.data.DbResult]](scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])]);
+  &lt;artifact&gt; val x$6: String = result.copy$default$1;
+  &lt;artifact&gt; val x$7: Map[String,org.neo4j.driver.Value] @scala.reflect.internal.annotations.uncheckedBounds = result.copy$default$2;
+  &lt;artifact&gt; val x$8: Map[String,List[org.neo4j.driver.Value]] @scala.reflect.internal.annotations.uncheckedBounds = result.copy$default$3;
+  result.copy(x$6, x$7, x$8, x$5)
+}
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          234
+        </td>
+        <td>
+          1873
+          -
+          1873
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy$default$1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy$default$1
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          237
+        </td>
+        <td>
+          1866
+          -
+          1956
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.copy
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.copy(x$6, x$7, x$8, x$5)
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          232
+        </td>
+        <td>
+          1943
+          -
+          1943
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])]
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          231
+        </td>
+        <td>
+          1923
+          -
+          1941
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$3.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result)))
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          230
+        </td>
+        <td>
+          1929
+          -
+          1940
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.DataRepository.processDogs
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          DataRepository.this.processDogs(result)
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          233
+        </td>
+        <td>
+          1895
+          -
+          1948
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.nodes.view.mapValues[List[de.zpro.backend.data.DbResult]](((x$3: List[de.zpro.backend.data.DbResult]) =&gt; x$3.map[de.zpro.backend.data.DbResult](((result: de.zpro.backend.data.DbResult) =&gt; DataRepository.this.processDogs(result))))).toMap[String, List[de.zpro.backend.data.DbResult]](scala.this.&lt;:&lt;.refl[(String, List[de.zpro.backend.data.DbResult])])
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
