@@ -1,10 +1,7 @@
-name: Backend Tests
+name: Backend Tests & Coverage
 
 on:
   push:
-    branches: [ "*" ]
-    paths: [ "backend/**" ]
-  pull_request:
     branches: [ "*" ]
     paths: [ "backend/**" ]
 
