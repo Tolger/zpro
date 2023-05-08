@@ -1,0 +1,15 @@
+.property-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.property {
+    margin: 0.3rem 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.7rem;
+    border: 1px solid #676767;
+}
+
+.property:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}

@@ -1,0 +1,11 @@
+services:
+  db:
+    ports:
+      - 7474:7474
+      - 7687:7687
+
+  backend:
+    build: ./backend
+
+  frontend:
+    build: ./frontend

@@ -1,0 +1,146 @@
+.advanced-search-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.advanced-search-filter-container {
+}
+
+.advanced-search-filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+.advanced-search-filter {
+    margin: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #cbcbcb;
+    border-radius: 0.4rem;
+}
+
+.advanced-search-filter-active {
+    background-color: #ecec78;
+    border-color: #ecec78;
+}
+
+.advanced-search-filter-label {
+    margin: 0.3rem;
+    flex-shrink: 0;
+    font-weight: bold;
+}
+
+.advanced-search-filter-value {
+    margin: 0.3rem;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.advanced-search-filter-value-component {
+    margin: 0 0.2rem;
+}
+
+.advanced-search-filter-select {
+    width: 6rem;
+    display: inline-block;
+}
+
+
+.advanced-search-filter-input {
+    width: 10rem;
+    height: 2.5rem;
+    font-size: 1rem;
+}
+
+input.advanced-search-filter-input {
+    margin: 0.2rem;
+    height: 2.1rem;
+}
+
+.advanced-search-filter-generations {
+    width: 2.5rem;
+}
+
+.advanced-search-output-container {
+    max-width: 60rem;
+}
+
+.advanced-search-output-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.advanced-search-output-section::after {
+    content: "";
+    flex: auto;
+}
+
+.advanced-search-output-button {
+    padding: 0.4rem;
+    margin: 0.3rem;
+    border: 1px solid #676767;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    color: black;
+}
+
+.advanced-search-preset-container {
+    display: flex;
+}
+
+.advanced-search-output-button-preset {
+}
+
+.advanced-search-output-button-preset:hover {
+    background-color: #ffd1d1;
+}
+
+.advanced-search-output-button-preset-active {
+    background-color: red;
+    color: white;
+}
+
+.advanced-search-output-button-preset-active:hover {
+    background-color: #c00000;
+    color: white;
+}
+
+.advanced-search-output-button-property {
+    padding: 0.4rem;
+    margin: 0.3rem;
+    border: 1px solid #676767;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    color: black;
+}
+
+.advanced-search-output-button-property:hover {
+    background-color: #e8e8ff;
+}
+
+.advanced-search-output-button-property-active {
+    background-color: blue;
+    color: white;
+}
+
+.advanced-search-output-button-property-active:hover {
+    background-color: #0000af;
+    color: white;
+}
+
+.advanced-search-submit {
+    background-color: #006e00;
+    margin: 1rem 0;
+    padding: 1rem;
+    width: 5rem;
+    text-align: center;
+    border-radius: 0.6rem;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+}

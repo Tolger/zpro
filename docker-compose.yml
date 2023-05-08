@@ -1,0 +1,33 @@
+services:
+  db:
+    image: neo4j
+    container_name: neo4j
+    restart: always
+    environment:
+      NEO4J_AUTH: none
+    volumes:
+      - "${NEO4J_FOLDER:-./neo4j}/conf:/conf"
+      - "${NEO4J_FOLDER:-./neo4j}/data:/data"
+      - "${NEO4J_FOLDER:-./neo4j}/import:/import"
+      - "${NEO4J_FOLDER:-./neo4j}/logs:/logs"
+      - "${NEO4J_FOLDER:-./neo4j}/plugins:/plugins"
+
+  backend:
+    container_name: backend
+    restart: always
+    depends_on:
+      - db
+
+  frontend:
+    container_name: frontend
+    restart: always
+
+  proxy:
+    image: nginx
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+    depends_on:
+      - backend
+      - frontend

@@ -1,0 +1,10 @@
+in
+Zuchtsoftware.iml
+neo4j/
+.idea/
+**/.idea/
+**/.bsp/
+backend/src/main/scala/de/zpro/backend/load/
+backend/target/
+backend/project/target/
+/backend/project/project/target/config-classes/
