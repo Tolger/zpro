@@ -10,7 +10,8 @@
             const kit = new Octokit({ })
             const folders = await kit.rest.repos.getContent({
                 owner: 'Tolger',
-                repo: 'zpro'
+                repo: 'zpro',
+                branch: 'gh-pages'
             });
             console.log(folders.data.map((folder) => folder.name))
         </script>
