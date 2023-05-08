@@ -20,7 +20,11 @@ jobs:
           distribution: temurin
           java-version: 17.0.5
           cache: 'sbt'
-      - name: Build and Test
+      - name: Build and Test with Coverage
         working-directory: ./backend
-        run: sbt test
+        run: sbt clean coverage test coverageReport
+      - name: Publish coverage to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: target/scoverage-report
 
