@@ -19,6 +19,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17.0.5
+          cache: 'sbt'
       - name: Build and Test
-        run: sbt -v +test
+        run: sbt test
 
