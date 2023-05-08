@@ -13,18 +13,15 @@ import scala.language.postfixOps
 object Server extends SprayJsonSupport with DefaultJsonProtocol {
   def main(args: Array[String]): Unit = {
     implicit val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "my-system")
-
     val initializer = new Initializer
-    val endpoint = initializer.endpoint
 
     val route: Route = concat(
       (post & path("graphql")) {
         entity(as[JsObject]) { requestJson =>
-          endpoint.graphQLEndpoint(requestJson)
+          initializer.endpoint.graphQLEndpoint(requestJson)
         }
       }
     )
-
     Http().newServerAt("0.0.0.0", 8888).bind(route)
   }
 }
