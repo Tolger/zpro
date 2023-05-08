@@ -22,9 +22,6 @@ object Server extends SprayJsonSupport with DefaultJsonProtocol {
         entity(as[JsObject]) { requestJson =>
           endpoint.graphQLEndpoint(requestJson)
         }
-      },
-      get {
-        getFromResource("graphiql.html")
       }
     )
 
