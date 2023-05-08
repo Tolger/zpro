@@ -1,0 +1,972 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/RequestObject.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.exceptions.UnknownChildNameException
+</span>4 <span style=''>import de.zpro.backend.util.Extensions.TryIterable
+</span>5 <span style=''>import sangria.schema.ProjectedName
+</span>6 <span style=''>
+</span>7 <span style=''>import scala.util.{Failure, Success, Try}
+</span>8 <span style=''>
+</span>9 <span style=''>trait RequestObjectParser {
+</span>10 <span style=''>  def fromGraphqlFields(dataType: String, fields: Seq[ProjectedName]): Try[RequestObject]
+</span>11 <span style=''>}
+</span>12 <span style=''>
+</span>13 <span style=''>private object RequestObject extends RequestObjectParser {
+</span>14 <span style=''>  def simple(dataType: String, fields: List[String]): RequestObject = </span><span style='background: #AEF1AE'>RequestObject(&quot;simple&quot;, None, dataType, fields, List.empty)</span><span style=''>
+</span>15 <span style=''>
+</span>16 <span style=''>  override def fromGraphqlFields(dataType: String, fields: Seq[ProjectedName]): Try[RequestObject] = </span><span style='background: #AEF1AE'>generateFromFields(dataType, fields)</span><span style=''>
+</span>17 <span style=''>
+</span>18 <span style=''>  private def generateFromFields(dataType: String, fields: Seq[ProjectedName], name: String = &quot;n&quot;, fieldName: Option[String] = None): Try[RequestObject] = {
+</span>19 <span style=''>    val (simple, children) = fields.partition(_.children.isEmpty)
+</span>20 <span style=''>    </span><span style='background: #AEF1AE'>generateChildObjects(children, name).map(children =&gt; {
+</span>21 <span style=''></span><span style='background: #AEF1AE'>      RequestObject(
+</span>22 <span style=''></span><span style='background: #AEF1AE'>        name = name,
+</span>23 <span style=''></span><span style='background: #AEF1AE'>        fieldName = fieldName,
+</span>24 <span style=''></span><span style='background: #AEF1AE'>        dataType = dataType,
+</span>25 <span style=''></span><span style='background: #AEF1AE'>        simpleFields = simple.map(_.name).toList,
+</span>26 <span style=''></span><span style='background: #AEF1AE'>        children = children
+</span>27 <span style=''></span><span style='background: #AEF1AE'>      )
+</span>28 <span style=''></span><span style='background: #AEF1AE'>    })</span><span style=''>
+</span>29 <span style=''>  }
+</span>30 <span style=''>
+</span>31 <span style=''>  private def generateChildObjects(children: Seq[ProjectedName], namePrefix: String): Try[List[RequestObject]] =
+</span>32 <span style=''>    </span><span style='background: #AEF1AE'>generateChildNames(children, namePrefix).map { case (name, details) =&gt;
+</span>33 <span style=''></span><span style='background: #AEF1AE'>      dataTypeFromFieldName(details.name).flatMap(dataType =&gt;
+</span>34 <span style=''></span><span style='background: #AEF1AE'>        generateFromFields(
+</span>35 <span style=''></span><span style='background: #AEF1AE'>          dataType = dataType,
+</span>36 <span style=''></span><span style='background: #AEF1AE'>          fields = details.children,
+</span>37 <span style=''></span><span style='background: #AEF1AE'>          name = name,
+</span>38 <span style=''></span><span style='background: #AEF1AE'>          fieldName = Some(details.name)
+</span>39 <span style=''></span><span style='background: #AEF1AE'>        )
+</span>40 <span style=''></span><span style='background: #AEF1AE'>      )
+</span>41 <span style=''></span><span style='background: #AEF1AE'>    }.toList.sequence</span><span style=''>
+</span>42 <span style=''>
+</span>43 <span style=''>  private def generateChildNames(children: Seq[ProjectedName], prefix: String): Seq[(String, ProjectedName)] =
+</span>44 <span style=''>    </span><span style='background: #AEF1AE'>children.zipWithIndex.map { case (details, index) =&gt;
+</span>45 <span style=''></span><span style='background: #AEF1AE'>      prefix + (index + 97).toChar -&gt; details
+</span>46 <span style=''></span><span style='background: #AEF1AE'>    }</span><span style=''> // 97 = a; only works for up to 26 children per object (currently impossible)
+</span>47 <span style=''>
+</span>48 <span style=''>  private def dataTypeFromFieldName(fieldName: String): Try[String] = fieldName match {
+</span>49 <span style=''>    case &quot;litter&quot; | &quot;litters&quot; =&gt; </span><span style='background: #AEF1AE'>Success(&quot;Litter&quot;)</span><span style=''>
+</span>50 <span style=''>    case &quot;kennel&quot; =&gt; </span><span style='background: #AEF1AE'>Success(&quot;Kennel&quot;)</span><span style=''>
+</span>51 <span style=''>    case &quot;owner&quot; =&gt; </span><span style='background: #AEF1AE'>Success(&quot;Person&quot;)</span><span style=''>
+</span>52 <span style=''>    case &quot;offspring&quot; | &quot;mother&quot; | &quot;father&quot; =&gt; </span><span style='background: #AEF1AE'>Success(&quot;Dog&quot;)</span><span style=''>
+</span>53 <span style=''>    case _ =&gt; </span><span style='background: #AEF1AE'>Failure(UnknownChildNameException(s&quot;Can't determine data type for unrecognized field name \&quot;$fieldName\&quot;&quot;))</span><span style=''>
+</span>54 <span style=''>  }
+</span>55 <span style=''>}
+</span>56 <span style=''>
+</span>57 <span style=''>case class RequestObject(name: String, fieldName: Option[String], dataType: String,
+</span>58 <span style=''>                         simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) {
+</span>59 <span style=''>  lazy val allChildren: List[RequestObject] = children ++ children.flatMap(_.allChildren)
+</span>60 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          17
+        </td>
+        <td>
+          519
+          -
+          529
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.collection.immutable.List.empty
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.`package`.List.empty[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          16
+        </td>
+        <td>
+          495
+          -
+          499
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          18
+        </td>
+        <td>
+          471
+          -
+          530
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.apply(&quot;simple&quot;, scala.None, dataType, fields, scala.`package`.List.empty[Nothing])
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          15
+        </td>
+        <td>
+          485
+          -
+          493
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;simple&quot;
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          20
+        </td>
+        <td>
+          633
+          -
+          633
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.generateFromFields$default$4
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateFromFields$default$4
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          19
+        </td>
+        <td>
+          633
+          -
+          633
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.generateFromFields$default$3
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateFromFields$default$3
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          21
+        </td>
+        <td>
+          633
+          -
+          669
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.generateFromFields
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateFromFields(dataType, fields, RequestObject.this.generateFromFields$default$3, RequestObject.this.generateFromFields$default$4)
+        </td>
+      </tr><tr>
+        <td>
+          19
+        </td>
+        <td>
+          23
+        </td>
+        <td>
+          845
+          -
+          845
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Tuple2._2
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$2._2
+        </td>
+      </tr><tr>
+        <td>
+          19
+        </td>
+        <td>
+          22
+        </td>
+        <td>
+          837
+          -
+          837
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Tuple2._1
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$2._1
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          27
+        </td>
+        <td>
+          898
+          -
+          1147
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Try.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateChildObjects(children, name).map[de.zpro.backend.data.RequestObject](((children: List[de.zpro.backend.data.RequestObject]) =&gt; RequestObject.apply(name, fieldName, dataType, simple.map[String](((x$3: sangria.schema.ProjectedName) =&gt; x$3.name)).toList, children)))
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          26
+        </td>
+        <td>
+          959
+          -
+          1140
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.apply(name, fieldName, dataType, simple.map[String](((x$3: sangria.schema.ProjectedName) =&gt; x$3.name)).toList, children)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          25
+        </td>
+        <td>
+          1078
+          -
+          1103
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toList
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          simple.map[String](((x$3: sangria.schema.ProjectedName) =&gt; x$3.name)).toList
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          24
+        </td>
+        <td>
+          1089
+          -
+          1095
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.ProjectedName.name
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$3.name
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          34
+        </td>
+        <td>
+          1347
+          -
+          1580
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Try.flatMap
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.dataTypeFromFieldName(details.name).flatMap[de.zpro.backend.data.RequestObject](((dataType: String) =&gt; RequestObject.this.generateFromFields(dataType, details.children, name, scala.Some.apply[String](details.name))))
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          28
+        </td>
+        <td>
+          1369
+          -
+          1381
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.ProjectedName.name
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          details.name
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          33
+        </td>
+        <td>
+          1347
+          -
+          1580
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Try.flatMap
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.dataTypeFromFieldName(details.name).flatMap[de.zpro.backend.data.RequestObject](((dataType: String) =&gt; RequestObject.this.generateFromFields(dataType, details.children, name, scala.Some.apply[String](details.name))))
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          32
+        </td>
+        <td>
+          1411
+          -
+          1572
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.generateFromFields
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateFromFields(dataType, details.children, name, scala.Some.apply[String](details.name))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          29
+        </td>
+        <td>
+          1481
+          -
+          1497
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.ProjectedName.children
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          details.children
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          31
+        </td>
+        <td>
+          1544
+          -
+          1562
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](details.name)
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          30
+        </td>
+        <td>
+          1549
+          -
+          1561
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.ProjectedName.name
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          details.name
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          35
+        </td>
+        <td>
+          1270
+          -
+          1593
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toList
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          RequestObject.this.generateChildNames(children, namePrefix).map[scala.util.Try[de.zpro.backend.data.RequestObject]](((x0$1: (String, sangria.schema.ProjectedName)) =&gt; x0$1 match {
+  case (_1: String, _2: sangria.schema.ProjectedName): (String, sangria.schema.ProjectedName)((name @ _), (details @ _)) =&gt; RequestObject.this.dataTypeFromFieldName(details.name).flatMap[de.zpro.backend.data.RequestObject](((dataType: String) =&gt; RequestObject.this.generateFromFields(dataType, details.children, name, scala.Some.apply[String](details.name))))
+})).toList
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          36
+        </td>
+        <td>
+          1270
+          -
+          1602
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.TryIterable.sequence
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.util.Extensions.TryIterable[de.zpro.backend.data.RequestObject, List, scala.util.Try](RequestObject.this.generateChildNames(children, namePrefix).map[scala.util.Try[de.zpro.backend.data.RequestObject]](((x0$1: (String, sangria.schema.ProjectedName)) =&gt; x0$1 match {
+  case (_1: String, _2: sangria.schema.ProjectedName): (String, sangria.schema.ProjectedName)((name @ _), (details @ _)) =&gt; RequestObject.this.dataTypeFromFieldName(details.name).flatMap[de.zpro.backend.data.RequestObject](((dataType: String) =&gt; RequestObject.this.generateFromFields(dataType, details.children, name, scala.Some.apply[String](details.name))))
+})).toList).sequence
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          39
+        </td>
+        <td>
+          1719
+          -
+          1823
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          children.zipWithIndex.map[(String, sangria.schema.ProjectedName)](((x0$1: (sangria.schema.ProjectedName, Int)) =&gt; x0$1 match {
+  case (_1: sangria.schema.ProjectedName, _2: Int): (sangria.schema.ProjectedName, Int)((details @ _), (index @ _)) =&gt; scala.Predef.ArrowAssoc[String](prefix.+(index.+(97).toChar)).-&gt;[sangria.schema.ProjectedName](details)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          38
+        </td>
+        <td>
+          1778
+          -
+          1817
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](prefix.+(index.+(97).toChar)).-&gt;[sangria.schema.ProjectedName](details)
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          37
+        </td>
+        <td>
+          1778
+          -
+          1817
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](prefix.+(index.+(97).toChar)).-&gt;[sangria.schema.ProjectedName](details)
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          41
+        </td>
+        <td>
+          2024
+          -
+          2041
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Litter&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          40
+        </td>
+        <td>
+          2024
+          -
+          2041
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Litter&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          43
+        </td>
+        <td>
+          2063
+          -
+          2080
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Kennel&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          42
+        </td>
+        <td>
+          2063
+          -
+          2080
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Kennel&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          44
+        </td>
+        <td>
+          2101
+          -
+          2118
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Person&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          45
+        </td>
+        <td>
+          2101
+          -
+          2118
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Person&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          47
+        </td>
+        <td>
+          2165
+          -
+          2179
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Dog&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          46
+        </td>
+        <td>
+          2165
+          -
+          2179
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;Dog&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          50
+        </td>
+        <td>
+          2194
+          -
+          2301
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.UnknownChildNameException.apply(&quot;Can\'t determine data type for unrecognized field name \&quot;&quot;.+(fieldName).+(&quot;\&quot;&quot;)))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          49
+        </td>
+        <td>
+          2194
+          -
+          2301
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.UnknownChildNameException.apply(&quot;Can\'t determine data type for unrecognized field name \&quot;&quot;.+(fieldName).+(&quot;\&quot;&quot;)))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          48
+        </td>
+        <td>
+          2202
+          -
+          2300
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.exceptions.UnknownChildNameException.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.datarepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.exceptions.UnknownChildNameException.apply(&quot;Can\'t determine data type for unrecognized field name \&quot;&quot;.+(fieldName).+(&quot;\&quot;&quot;))
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
