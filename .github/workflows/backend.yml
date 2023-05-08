@@ -21,5 +21,6 @@ jobs:
           java-version: 17.0.5
           cache: 'sbt'
       - name: Build and Test
+        working-directory: ./backend
         run: sbt test
 
