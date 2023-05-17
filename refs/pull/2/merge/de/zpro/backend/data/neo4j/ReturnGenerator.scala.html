@@ -1,0 +1,322 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/neo4j/ReturnGenerator.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.neo4j
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.RequestObject
+</span>4 <span style=''>
+</span>5 <span style=''>private trait ReturnGenerator {
+</span>6 <span style=''>  def generateReturnString(from: RequestObject): String
+</span>7 <span style=''>}
+</span>8 <span style=''>
+</span>9 <span style=''>private object ReturnGenerator extends ReturnGenerator {
+</span>10 <span style=''>  private val complexProperties = </span><span style='background: #AEF1AE'>ComplexPropertyGenerator.complexFields</span><span style=''>
+</span>11 <span style=''>
+</span>12 <span style=''>  override def generateReturnString(from: RequestObject): String =
+</span>13 <span style=''>    s&quot;WITH ${generateWithFilter(from)} RETURN ${generateReturnPhrase(from)}&quot;
+</span>14 <span style=''>
+</span>15 <span style=''>  private def generateWithFilter(node: RequestObject): String =
+</span>16 <span style=''>    </span><span style='background: #AEF1AE'>(node.name +: node.allChildren.map(childObject)).mkString(&quot;, &quot;)</span><span style=''>
+</span>17 <span style=''>
+</span>18 <span style=''>  private def childObject(child: RequestObject): String =
+</span>19 <span style=''>    s&quot;{${childProperties(child)}} AS ${child.name}&quot;
+</span>20 <span style=''>
+</span>21 <span style=''>  private def childProperties(child: RequestObject): String =
+</span>22 <span style=''>    </span><span style='background: #AEF1AE'>child.simpleFields.map(generateMapProperty(child.name, _)).mkString(&quot;, &quot;)</span><span style=''>
+</span>23 <span style=''>
+</span>24 <span style=''>  private def generateMapProperty(nodeName: String, propertyName: String): String = {
+</span>25 <span style=''>    val link = if (</span><span style='background: #AEF1AE'>complexProperties.contains(propertyName)</span><span style=''>) </span><span style='background: #AEF1AE'>'_'</span><span style=''> else </span><span style='background: #AEF1AE'>'.'</span><span style=''>
+</span>26 <span style=''>    s&quot;$propertyName: $nodeName$link$propertyName&quot;
+</span>27 <span style=''>  }
+</span>28 <span style=''>
+</span>29 <span style=''>  private def generateReturnPhrase(node: RequestObject): String =
+</span>30 <span style=''>    </span><span style='background: #AEF1AE'>(rootNodeProperties(node) +: node.allChildren.map(child =&gt; s&quot;COLLECT(${child.name}) AS ${child.name}&quot;)).mkString(&quot;, &quot;)</span><span style=''>
+</span>31 <span style=''>
+</span>32 <span style=''>  private def rootNodeProperties(node: RequestObject): String =
+</span>33 <span style=''>    </span><span style='background: #AEF1AE'>node.simpleFields.map(field =&gt; s&quot;${node.name}.$field AS $field&quot;).mkString(&quot;, &quot;)</span><span style=''>
+</span>34 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          236
+        </td>
+        <td>
+          261
+          -
+          299
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.complexFields
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.complexFields
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          237
+        </td>
+        <td>
+          514
+          -
+          577
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.mkString
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          {
+  final &lt;synthetic&gt; &lt;artifact&gt; val rassoc$1: String = node.name;
+  node.allChildren.map[String](((child: de.zpro.backend.data.RequestObject) =&gt; ReturnGenerator.this.childObject(child))).+:[String](rassoc$1)
+}.mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          238
+        </td>
+        <td>
+          756
+          -
+          829
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.mkString
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          child.simpleFields.map[String](((x$1: String) =&gt; ReturnGenerator.this.generateMapProperty(child.name, x$1))).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          241
+        </td>
+        <td>
+          978
+          -
+          981
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          '_'
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          240
+        </td>
+        <td>
+          978
+          -
+          981
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          '_'
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          243
+        </td>
+        <td>
+          987
+          -
+          990
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          '.'
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          239
+        </td>
+        <td>
+          936
+          -
+          976
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.contains
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          ReturnGenerator.this.complexProperties.contains[String](propertyName)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          242
+        </td>
+        <td>
+          987
+          -
+          990
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          '.'
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          244
+        </td>
+        <td>
+          1116
+          -
+          1234
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.mkString
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          {
+  final &lt;synthetic&gt; &lt;artifact&gt; val rassoc$2: String = ReturnGenerator.this.rootNodeProperties(node);
+  node.allChildren.map[String](((child: de.zpro.backend.data.RequestObject) =&gt; &quot;COLLECT(&quot;.+(child.name).+(&quot;) AS &quot;).+(child.name))).+:[String](rassoc$2)
+}.mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          245
+        </td>
+        <td>
+          1304
+          -
+          1383
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.mkString
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          node.simpleFields.map[String](((field: String) =&gt; &quot;&quot;.+(node.name).+(&quot;.&quot;).+(field).+(&quot; AS &quot;).+(field))).mkString(&quot;, &quot;)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
