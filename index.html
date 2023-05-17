@@ -1,60 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <style>
-        html {
-            font-family: sans-serif;
-        }
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+    html {
+      font-family: sans-serif;
+    }
 
-        .container {
-            margin: 5rem auto;
-            display: flex;
-            flex-direction: column;
-            width: 15rem;
-            padding: 1rem;
-            background-color: #e5e5e5;
-            border-radius: 1rem;
-        }
+    .container {
+      margin: 5rem auto;
+      display: flex;
+      flex-direction: column;
+      width: 30rem;
+      padding: 1rem;
+      background-color: #e5e5e5;
+      border-radius: 1rem;
+    }
 
-        a {
-            padding: 0.3rem;
-            font-size: 1.5rem;
-            text-decoration: none;
-            border-radius: 0.2rem;
-            color: black;
-        }
+    a {
+      padding: 0.3rem;
+      font-size: 1.5rem;
+      text-decoration: none;
+      border-radius: 0.2rem;
+      color: black;
+    }
 
-        a:hover {
-            background-color: #c2c2c2;
-        }
-    </style>
+    a:hover {
+      background-color: #c2c2c2;
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="container">
-        <h1>Branches</h1>
-    </div>
-    <script type="module">
-      import { Octokit, App } from "https://cdn.skypack.dev/octokit";
-      const kit = new Octokit({ })
-      const rawFolders = (await kit.rest.repos.getContent({
-        owner: 'Tolger',
-        repo: 'zpro',
-        ref: 'gh-pages'
-      }))
-      const folders = rawFolders.data
-        .filter(f => f.type === "dir")
-        .map(f =>  f.name);
-      const container = document.getElementById("container")
-      folders.forEach(folder => {
-        const a = document.createElement('a')
-        const linkText = document.createTextNode(folder)
-        a.appendChild(linkText)
-        a.title = folder
-        a.href = `https://tolger.github.io/zpro/${folder}`
-        container.appendChild(a)
-      })
-    </script>
+<div class="container" id="container">
+  <h1>Branches</h1>
+</div>
+<script type="module">
+  import { Octokit, App } from "https://cdn.skypack.dev/octokit";
+  const kit = new Octokit({ })
+  const rawFolders = (await kit.rest.repos.getContent({
+    owner: 'Tolger',
+    repo: 'zpro',
+    ref: 'gh-pages'
+  }))
+  const folders = rawFolders.data
+          .filter(f => f.type === "dir")
+          .map(f =>  f.name)
+  let featureFolders
+  if (folders.includes("feature")) {
+    const rawFeatureFolders = (await kit.rest.repos.getContent({
+      owner: 'Tolger',
+      repo: 'zpro',
+      ref: 'gh-pages',
+      path: 'feature'
+    }))
+    featureFolders = rawFeatureFolders.data
+            .filter(f => f.type === "dir")
+            .map(f =>  `feature/${f.name}`)
+  } else {
+    featureFolders = []
+  }
+  const processedFolders = folders
+          .filter(f => !["feature", "refs"].includes(f))
+          .concat(featureFolders)
+  const container = document.getElementById("container")
+  processedFolders.forEach(folder => {
+    const a = document.createElement('a')
+    const linkText = document.createTextNode(folder)
+    a.appendChild(linkText)
+    a.title = folder
+    a.href = `https://tolger.github.io/zpro/${folder}`
+    container.appendChild(a)
+  })
+</script>
 </body>
 </html>
