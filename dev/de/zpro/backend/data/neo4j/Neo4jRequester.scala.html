@@ -36,7 +36,7 @@
 </span>12 <span style=''>  // $COVERAGE-ON$
 </span>13 <span style=''>
 </span>14 <span style=''>  private[neo4j] def default(connection: Neo4jConnection)(implicit context: ExecutionContext): DatabaseRequester =
-</span>15 <span style=''>    </span><span style='background: #AEF1AE'>new Neo4jRequester(MatchGenerator, ReturnGenerator, RecordParser, connection)</span><span style=''>
+</span>15 <span style=''>    </span><span style='background: #AEF1AE'>new Neo4jRequester(MatchGenerator.default, ReturnGenerator, RecordParser, connection)</span><span style=''>
 </span>16 <span style=''>}
 </span>17 <span style=''>
 </span>18 <span style=''>class Neo4jRequester(matchGenerator: MatchGenerator, returnGenerator: ReturnGenerator, parser: RecordParser, connection: Neo4jConnection)(implicit private val context: ExecutionContext) extends DatabaseRequester {
@@ -104,12 +104,12 @@
           15
         </td>
         <td>
-          93
+          132
         </td>
         <td>
           551
           -
-          628
+          636
         </td>
         <td>
           ApplyToImplicitArgs
@@ -121,19 +121,19 @@
           de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
-          new Neo4jRequester(MatchGenerator, ReturnGenerator, RecordParser, connection)(context)
+          new Neo4jRequester(MatchGenerator.default, ReturnGenerator, RecordParser, connection)(context)
         </td>
       </tr><tr>
         <td>
           20
         </td>
         <td>
-          94
+          133
         </td>
         <td>
-          924
+          932
           -
-          940
+          948
         </td>
         <td>
           Apply
@@ -152,12 +152,12 @@
           24
         </td>
         <td>
-          95
+          134
         </td>
         <td>
-          1132
+          1140
           -
-          1144
+          1152
         </td>
         <td>
           Select
@@ -176,12 +176,12 @@
           24
         </td>
         <td>
-          97
+          136
         </td>
         <td>
-          1069
+          1077
           -
-          1145
+          1153
         </td>
         <td>
           ApplyToImplicitArgs
@@ -200,12 +200,12 @@
           24
         </td>
         <td>
-          96
+          135
         </td>
         <td>
-          1131
+          1139
           -
-          1131
+          1139
         </td>
         <td>
           Select
@@ -224,12 +224,12 @@
           27
         </td>
         <td>
-          98
+          137
         </td>
         <td>
-          1231
+          1239
           -
-          1357
+          1365
         </td>
         <td>
           Apply
@@ -248,12 +248,12 @@
           30
         </td>
         <td>
-          103
+          142
         </td>
         <td>
-          1452
+          1460
           -
-          1614
+          1622
         </td>
         <td>
           ApplyToImplicitArgs
@@ -272,12 +272,12 @@
           30
         </td>
         <td>
-          102
+          141
         </td>
         <td>
-          1494
+          1502
           -
-          1494
+          1502
         </td>
         <td>
           Select
@@ -296,12 +296,12 @@
           32
         </td>
         <td>
-          101
+          140
         </td>
         <td>
-          1512
+          1520
           -
-          1608
+          1616
         </td>
         <td>
           ApplyToImplicitArgs
@@ -320,12 +320,12 @@
           32
         </td>
         <td>
-          100
+          139
         </td>
         <td>
-          1559
+          1567
           -
-          1559
+          1567
         </td>
         <td>
           Select
@@ -344,12 +344,12 @@
           32
         </td>
         <td>
-          99
+          138
         </td>
         <td>
-          1571
+          1579
           -
-          1607
+          1615
         </td>
         <td>
           Apply
@@ -368,12 +368,12 @@
           36
         </td>
         <td>
-          104
+          143
         </td>
         <td>
-          1712
+          1720
           -
-          1755
+          1763
         </td>
         <td>
           Apply
@@ -392,12 +392,12 @@
           37
         </td>
         <td>
-          107
+          146
         </td>
         <td>
-          1796
+          1804
           -
-          1941
+          1949
         </td>
         <td>
           Block
@@ -419,12 +419,12 @@
           38
         </td>
         <td>
-          105
+          144
         </td>
         <td>
-          1826
+          1834
           -
-          1871
+          1879
         </td>
         <td>
           Apply
@@ -443,12 +443,12 @@
           39
         </td>
         <td>
-          106
+          145
         </td>
         <td>
-          1880
+          1888
           -
-          1941
+          1949
         </td>
         <td>
           Apply
@@ -467,12 +467,12 @@
           40
         </td>
         <td>
-          110
+          149
         </td>
         <td>
-          1993
+          2001
           -
-          2041
+          2049
         </td>
         <td>
           Apply
@@ -491,12 +491,12 @@
           40
         </td>
         <td>
-          109
+          148
         </td>
         <td>
-          2007
+          2015
           -
-          2040
+          2048
         </td>
         <td>
           Apply
@@ -515,12 +515,12 @@
           40
         </td>
         <td>
-          108
+          147
         </td>
         <td>
-          2024
+          2032
           -
-          2036
+          2044
         </td>
         <td>
           Apply
@@ -539,12 +539,12 @@
           40
         </td>
         <td>
-          111
+          150
         </td>
         <td>
-          1993
+          2001
           -
-          2041
+          2049
         </td>
         <td>
           Block
@@ -563,36 +563,12 @@
           41
         </td>
         <td>
-          113
+          151
         </td>
         <td>
-          2067
+          2075
           -
-          2083
-        </td>
-        <td>
-          Block
-        </td>
-        <td>
-          scala.concurrent.Future.failed
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          scala.concurrent.Future.failed[Nothing](e)
-        </td>
-      </tr><tr>
-        <td>
-          41
-        </td>
-        <td>
-          112
-        </td>
-        <td>
-          2067
-          -
-          2083
+          2091
         </td>
         <td>
           Apply
@@ -608,15 +584,39 @@
         </td>
       </tr><tr>
         <td>
+          41
+        </td>
+        <td>
+          152
+        </td>
+        <td>
+          2075
+          -
+          2091
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](e)
+        </td>
+      </tr><tr>
+        <td>
           46
         </td>
         <td>
-          114
+          153
         </td>
         <td>
-          2188
+          2196
           -
-          2222
+          2230
         </td>
         <td>
           Apply
@@ -635,12 +635,36 @@
           47
         </td>
         <td>
-          140
+          178
         </td>
         <td>
-          2227
+          2247
           -
-          2735
+          2247
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.context
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.context
+        </td>
+      </tr><tr>
+        <td>
+          47
+        </td>
+        <td>
+          179
+        </td>
+        <td>
+          2235
+          -
+          2743
         </td>
         <td>
           ApplyToImplicitArgs
@@ -666,39 +690,15 @@
         </td>
       </tr><tr>
         <td>
-          47
-        </td>
-        <td>
-          139
-        </td>
-        <td>
-          2239
-          -
-          2239
-        </td>
-        <td>
-          Select
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.Neo4jRequester.context
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          Neo4jRequester.this.context
-        </td>
-      </tr><tr>
-        <td>
           48
         </td>
         <td>
-          138
+          177
         </td>
         <td>
-          2257
+          2265
           -
-          2729
+          2737
         </td>
         <td>
           Apply
@@ -727,12 +727,12 @@
           49
         </td>
         <td>
-          115
+          154
         </td>
         <td>
-          2302
+          2310
           -
-          2329
+          2337
         </td>
         <td>
           Apply
@@ -751,12 +751,12 @@
           50
         </td>
         <td>
-          125
+          164
         </td>
         <td>
-          2349
+          2357
           -
-          2349
+          2357
         </td>
         <td>
           Select
@@ -775,12 +775,12 @@
           50
         </td>
         <td>
-          124
+          163
         </td>
         <td>
-          2349
+          2357
           -
-          2349
+          2357
         </td>
         <td>
           Select
@@ -799,12 +799,12 @@
           50
         </td>
         <td>
-          126
+          165
         </td>
         <td>
-          2349
+          2357
           -
-          2551
+          2559
         </td>
         <td>
           Apply
@@ -823,12 +823,12 @@
           51
         </td>
         <td>
-          116
+          155
         </td>
         <td>
-          2380
+          2388
           -
-          2413
+          2421
         </td>
         <td>
           Apply
@@ -847,12 +847,12 @@
           52
         </td>
         <td>
-          123
+          162
         </td>
         <td>
-          2438
+          2446
           -
-          2541
+          2549
         </td>
         <td>
           Apply
@@ -871,12 +871,12 @@
           53
         </td>
         <td>
-          119
+          158
         </td>
         <td>
-          2455
+          2463
           -
-          2479
+          2487
         </td>
         <td>
           Apply
@@ -895,12 +895,12 @@
           53
         </td>
         <td>
-          118
+          157
         </td>
         <td>
-          2463
+          2471
           -
-          2479
+          2487
         </td>
         <td>
           Apply
@@ -919,12 +919,12 @@
           53
         </td>
         <td>
-          117
+          156
         </td>
         <td>
-          2455
+          2463
           -
-          2459
+          2467
         </td>
         <td>
           Literal
@@ -943,36 +943,12 @@
           54
         </td>
         <td>
-          122
+          160
         </td>
         <td>
-          2493
+          2515
           -
-          2529
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          scala.Predef.ArrowAssoc.-&gt;
-        </td>
-        <td>
-          
-        </td>
-        <td style="background: #AEF1AE">
-          scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))
-        </td>
-      </tr><tr>
-        <td>
-          54
-        </td>
-        <td>
-          121
-        </td>
-        <td>
-          2507
-          -
-          2529
+          2537
         </td>
         <td>
           Apply
@@ -991,12 +967,12 @@
           54
         </td>
         <td>
-          120
+          159
         </td>
         <td>
-          2493
+          2501
           -
-          2503
+          2511
         </td>
         <td>
           Literal
@@ -1012,15 +988,39 @@
         </td>
       </tr><tr>
         <td>
+          54
+        </td>
+        <td>
+          161
+        </td>
+        <td>
+          2501
+          -
+          2537
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))
+        </td>
+      </tr><tr>
+        <td>
           57
         </td>
         <td>
-          137
+          176
         </td>
         <td>
-          2560
+          2568
           -
-          2720
+          2728
         </td>
         <td>
           Apply
@@ -1039,12 +1039,12 @@
           57
         </td>
         <td>
-          136
+          175
         </td>
         <td>
-          2560
+          2568
           -
-          2560
+          2568
         </td>
         <td>
           Select
@@ -1063,12 +1063,12 @@
           58
         </td>
         <td>
-          127
+          166
         </td>
         <td>
-          2591
+          2599
           -
-          2605
+          2613
         </td>
         <td>
           Literal
@@ -1087,12 +1087,12 @@
           59
         </td>
         <td>
-          128
+          167
         </td>
         <td>
-          2634
+          2642
           -
-          2641
+          2649
         </td>
         <td>
           Literal
@@ -1111,36 +1111,12 @@
           59
         </td>
         <td>
-          131
+          169
         </td>
         <td>
-          2630
+          2642
           -
-          2665
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          scala.collection.MapFactory.apply
-        </td>
-        <td>
-          
-        </td>
-        <td style="background: #AEF1AE">
-          scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;)))
-        </td>
-      </tr><tr>
-        <td>
-          59
-        </td>
-        <td>
-          130
-        </td>
-        <td>
-          2634
-          -
-          2664
+          2672
         </td>
         <td>
           Apply
@@ -1159,12 +1135,12 @@
           59
         </td>
         <td>
-          129
+          168
         </td>
         <td>
-          2645
+          2653
           -
-          2664
+          2672
         </td>
         <td>
           Apply
@@ -1180,15 +1156,39 @@
         </td>
       </tr><tr>
         <td>
+          59
+        </td>
+        <td>
+          170
+        </td>
+        <td>
+          2638
+          -
+          2673
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;)))
+        </td>
+      </tr><tr>
+        <td>
           60
         </td>
         <td>
-          134
+          173
         </td>
         <td>
-          2689
+          2697
           -
-          2709
+          2717
         </td>
         <td>
           Apply
@@ -1207,12 +1207,12 @@
           60
         </td>
         <td>
-          133
+          172
         </td>
         <td>
-          2699
+          2707
           -
-          2709
+          2717
         </td>
         <td>
           Apply
@@ -1231,36 +1231,12 @@
           60
         </td>
         <td>
-          132
+          174
         </td>
         <td>
-          2689
+          2693
           -
-          2695
-        </td>
-        <td>
-          Literal
-        </td>
-        <td>
-          &lt;nosymbol&gt;
-        </td>
-        <td>
-          
-        </td>
-        <td style="background: #AEF1AE">
-          &quot;node&quot;
-        </td>
-      </tr><tr>
-        <td>
-          60
-        </td>
-        <td>
-          135
-        </td>
-        <td>
-          2685
-          -
-          2710
+          2718
         </td>
         <td>
           Apply
@@ -1273,6 +1249,30 @@
         </td>
         <td style="background: #AEF1AE">
           scala.Predef.Map.apply[String, List[de.zpro.backend.data.DbResult]](scala.Predef.ArrowAssoc[String](&quot;node&quot;).-&gt;[List[de.zpro.backend.data.DbResult]](scala.`package`.List.apply[de.zpro.backend.data.DbResult](node)))
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          171
+        </td>
+        <td>
+          2697
+          -
+          2703
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;node&quot;
         </td>
       </tr>
     </table>
