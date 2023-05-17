@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="438" statements-invoked="438" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684331050234">
+statement-count="438" statements-invoked="438" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684331516514">
     <packages>
         <package name="de.zpro.backend.data" statement-count="49" statements-invoked="49" statement-rate="100.00">
             <classes>
@@ -338,7 +338,7 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="buildTree" start="2788" end="2892" line="71" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="buildTree" start="2807" end="2823" line="70" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="buildTree" start="2807" end="2823" line="70" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="buildTree" start="2838" end="2891" line="71" branch="false" invocation-count="1" ignored="false">
@@ -390,10 +390,10 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                         name="de.zpro.backend.data.neo4j/RecordParser/processRoot" statement-count="9" statements-invoked="9" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="873" end="929" line="22" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="873" end="929" line="22" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="1022" end="1051" line="24" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="1022" end="1051" line="24" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="951" end="951" line="23" branch="false" invocation-count="1" ignored="false">
@@ -402,13 +402,13 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="1180" end="1217" line="29" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="924" end="924" line="22" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="924" end="924" line="22" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="896" end="922" line="22" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="896" end="922" line="22" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="939" end="939" line="23" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="939" end="939" line="23" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processRoot" start="1083" end="1096" line="26" branch="false" invocation-count="1" ignored="false">
@@ -474,7 +474,7 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                         name="de.zpro.backend.data.neo4j/RecordParser/separateSimpleFields" statement-count="7" statements-invoked="7" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1528" end="1551" line="40" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1528" end="1551" line="40" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1568" end="1568" line="40" branch="false" invocation-count="1" ignored="false">
@@ -483,7 +483,7 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1365" end="1365" line="34" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1353" end="1353" line="34" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1353" end="1353" line="34" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateSimpleFields" start="1528" end="1566" line="40" branch="false" invocation-count="1" ignored="false">
@@ -500,25 +500,25 @@ statement-count="438" statements-invoked="438" statement-rate="100.00" branch-ra
                         name="de.zpro.backend.data.neo4j/RecordParser/parseResult" statement-count="9" statements-invoked="9" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="669" end="678" line="16" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="669" end="678" line="16" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="705" end="716" line="17" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="705" end="716" line="17" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="680" end="680" line="16" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="680" end="680" line="16" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="724" end="752" line="18" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="658" end="665" line="16" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="658" end="665" line="16" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="625" end="640" line="16" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="658" end="678" line="16" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="658" end="678" line="16" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="parseResult" start="625" end="717" line="17" branch="false" invocation-count="1" ignored="false">
