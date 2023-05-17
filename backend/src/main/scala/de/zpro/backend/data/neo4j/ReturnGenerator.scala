@@ -7,7 +7,7 @@ private trait ReturnGenerator {
 }
 
 private object ReturnGenerator extends ReturnGenerator {
-  private val complexProperties = List("pc", "pcAll", "pcUnique")
+  private val complexProperties = ComplexPropertyGenerator.complexFields
 
   override def generateReturnString(from: RequestObject): String =
     s"WITH ${generateWithFilter(from)} RETURN ${generateReturnPhrase(from)}"

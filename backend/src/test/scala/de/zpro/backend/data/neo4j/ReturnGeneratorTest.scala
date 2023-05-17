@@ -27,4 +27,11 @@ class ReturnGeneratorTest extends AnyFlatSpec with should.Matchers {
     response should be("WITH d, {prop5: l.prop5, prop6: l.prop6} AS l, {prop1: m.prop1, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f " +
       "RETURN d.prop7 AS prop7, d.prop8 AS prop8, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f")
   }
+
+  it should "return a complex property" in {
+    val litter = RequestObject("l", Some("litter"), "Litter", List("prop1", "prop2"), List())
+    val request = RequestObject("d", None, "Dog", List("prop3", "prop4"), List(litter))
+    val response = ReturnGenerator.generateReturnString(request)
+    response should be("WITH d, {prop1: l.prop1, prop2: l.prop2} AS l RETURN d.prop3 AS prop3, d.prop4 AS prop4, COLLECT(l) AS l")
+  }
 }

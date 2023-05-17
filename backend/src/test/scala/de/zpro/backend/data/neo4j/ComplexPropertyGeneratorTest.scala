@@ -12,7 +12,27 @@ class ComplexPropertyGeneratorTest extends AnyFlatSpec with should.Matchers {
        |   MATCH ($name)-[:BornIn|Mother|Father*..10]->(ancestor:Dog)
        |   WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
        |   WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
-       |   RETURN toFloat(nUnique) / nAll AS pc_$name, nUnique AS pcUnique_$name, nAll AS pcAll_$name
+       |   RETURN toFloat(nUnique) / nAll AS ${name}_pc, nUnique AS ${name}_pcUnique, nAll AS ${name}_pcAll
+       | }
+       |""".stripMargin
+
+  private def coiResponse(name: String): String =
+    s"""
+       | CALL {
+       |   WITH $name
+       |   MATCH ($name)-[:BornIn]->(litter:Litter)-[:Mother]->(mother:Dog) MATCH (litter)-[:Father]->(father:Dog)
+       |   MATCH (mother)-[p1:BornIn|Mother|Father*..10]->(common_ancestor:Dog)
+       |   MATCH (father)-[p2:BornIn|Mother|Father*..10]->(common_ancestor:Dog)
+       |   WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths
+       |   WITH [path IN ancestorPaths WHERE NOT
+       |              ANY(otherPath IN ancestorPaths WHERE otherPath <> path AND
+       |                   (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR
+       |                    ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths
+       |   UNWIND ancestorPaths AS dataPoint
+       |   WITH dataPoint.p1 AS p1, dataPoint.p2 as p2
+       |   WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n
+       |   WITH sum(n) AS coi
+       |   RETURN ik AS ${name}_coi
        | }
        |""".stripMargin
 
@@ -34,6 +54,12 @@ class ComplexPropertyGeneratorTest extends AnyFlatSpec with should.Matchers {
     response should be(pcResponse("name"))
   }
 
+  it should "only generate a single pedigree collapse call per node" in {
+    val request = RequestObject("name", None, "Test", List("pc", "pcUnique", "pcAll", "simpleField", "anotherSimpleField"), List())
+    val response = ComplexPropertyGenerator.generateComplex(request)
+    response should be(pcResponse("name"))
+  }
+
   it should "generate pedigree collapse calls for child nodes" in {
     val grandchild = RequestObject("grandchild", None, "Test", List("pc", "pcUnique", "pcAll", "simpleField", "anotherSimpleField"), List())
     val child = RequestObject("child", None, "Test", List("pc", "pcUnique", "pcAll", "simpleField", "anotherSimpleField"), List(grandchild))
@@ -41,5 +67,11 @@ class ComplexPropertyGeneratorTest extends AnyFlatSpec with should.Matchers {
     val response = ComplexPropertyGenerator.generateComplex(request)
     val expected = s"${pcResponse("name")}, ${pcResponse("child")}, ${pcResponse("grandchild")}"
     response should be(expected)
+  }
+
+  "The ComplexPropertyGenerator" should "generate a coefficient of inbreeding call for coi fields" in {
+    val request = RequestObject("name", None, "Test", List("coi", "simpleField", "anotherSimpleField"), List())
+    val response = ComplexPropertyGenerator.generateComplex(request)
+    response should be(coiResponse("name"))
   }
 }

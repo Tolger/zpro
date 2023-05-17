@@ -205,7 +205,7 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
         |   MATCH (m)-[:BornIn|Mother|Father*..10]->(ancestor:Dog)
         |   WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
         |   WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
-        |   RETURN toFloat(nUnique) / nAll AS pc_m, nUnique AS pcUnique_m, nAll AS pcAll_m
+        |   RETURN toFloat(nUnique) / nAll AS m_pc, nUnique AS m_pcUnique, nAll AS m_pcAll
         | }
         | """.stripMargin +
       s"WHERE d.id = \"$id\" " +
