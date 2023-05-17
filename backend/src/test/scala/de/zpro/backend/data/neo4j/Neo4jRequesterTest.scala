@@ -159,7 +159,7 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val requester = Neo4jRequester.default(connection)
 
     val motherSimpleProperties = Map(
-      "prop1" -> new StringValue("motherString"))
+      "pc" -> new StringValue("motherString"))
     val motherListProperties = Map(
       "prop2" -> List(new IntegerValue(5), new IntegerValue(1)))
     val motherProperties: Map[String, Value] = motherSimpleProperties ++ motherListProperties.view.mapValues(l => new ListValue(l: _*)).toMap
@@ -199,8 +199,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
 
     val id = "dog-id"
     val databaseRequest = "MATCH (d:Dog), (d)-[:BornIn]->(l:Litter), (l)-[:Mother]->(m:Dog), (l)-[:Father]->(f:Dog) " +
+      """
+        | CALL {
+        |   WITH m
+        |   MATCH (m)-[:BornIn|Mother|Father*..10]->(ancestor:Dog)
+        |   WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
+        |   WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
+        |   RETURN toFloat(nUnique) / nAll AS m_pc, nUnique AS m_pcUnique, nAll AS m_pcAll
+        | }
+        | """.stripMargin +
       s"WHERE d.id = \"$id\" " +
-      "WITH d, {prop5: l.prop5, prop6: l.prop6} AS l, {prop1: m.prop1, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f " +
+      "WITH d, {prop5: l.prop5, prop6: l.prop6} AS l, {pc: m_pc, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f " +
       "RETURN d.prop7 AS prop7, d.prop8 AS prop8, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f"
     (connection.executeRequest _).expects(databaseRequest).returns(Future.successful(response)).once()
 

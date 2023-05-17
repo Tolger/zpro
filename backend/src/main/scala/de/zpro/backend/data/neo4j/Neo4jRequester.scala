@@ -12,7 +12,7 @@ object Neo4jRequester {
   // $COVERAGE-ON$
 
   private[neo4j] def default(connection: Neo4jConnection)(implicit context: ExecutionContext): DatabaseRequester =
-    new Neo4jRequester(MatchGenerator, ReturnGenerator, RecordParser, connection)
+    new Neo4jRequester(MatchGenerator.default, ReturnGenerator, RecordParser, connection)
 }
 
 class Neo4jRequester(matchGenerator: MatchGenerator, returnGenerator: ReturnGenerator, parser: RecordParser, connection: Neo4jConnection)(implicit private val context: ExecutionContext) extends DatabaseRequester {
