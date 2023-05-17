@@ -59,7 +59,16 @@ private trait BaseSchemas {
     fields = fields(
       Field(name = "gender",
         fieldType = StringType,
-        resolve = _.value("gender").asString)
+        resolve = _.value("gender").asString),
+      Field(name = "pc",
+        fieldType = FloatType,
+        resolve = _.value("pc").asDouble),
+      Field(name = "pcUnique",
+        fieldType = FloatType,
+        resolve = _.value("pcUnique").asDouble),
+      Field(name = "pcAll",
+        fieldType = FloatType,
+        resolve = _.value("pcAll").asDouble)
     )
   )
 
