@@ -12,10 +12,12 @@ object Neo4jRequester {
   // $COVERAGE-ON$
 
   private[neo4j] def default(connection: Neo4jConnection)(implicit context: ExecutionContext): DatabaseRequester =
-    new Neo4jRequester(MatchGenerator.default, ReturnGenerator, RecordParser, connection)
+    new Neo4jRequester(MatchGenerator, ComplexPropertyGenerator, ReturnGenerator, RecordParser, connection)
 }
 
-class Neo4jRequester(matchGenerator: MatchGenerator, returnGenerator: ReturnGenerator, parser: RecordParser, connection: Neo4jConnection)(implicit private val context: ExecutionContext) extends DatabaseRequester {
+class Neo4jRequester(matchGenerator: MatchGenerator, complexGenerator: ComplexPropertyGenerator,
+                     returnGenerator: ReturnGenerator, parser: RecordParser,
+                     connection: Neo4jConnection)(implicit private val context: ExecutionContext) extends DatabaseRequester {
   override def getNodes(request: RequestObject): Future[List[DbResult]] =
     run(request, "")
 
@@ -33,10 +35,16 @@ class Neo4jRequester(matchGenerator: MatchGenerator, returnGenerator: ReturnGene
     )
 
   private def buildRequest(details: RequestObject, whereString: String): Future[String] = {
-    matchGenerator.generateMatchString(details) match {
+    val simplePropertiesRequest = complexGenerator.filterOutComplex(details)
+    matchGenerator.generateMatchString(simplePropertiesRequest) match {
       case Success(matchString) =>
+        val propertyCalls = complexGenerator.generateComplex(details)
         val returnString = returnGenerator.generateReturnString(details)
-        Future.successful(s"$matchString $whereString $returnString")
+        Future.successful(
+          s"""$matchString
+             |$whereString
+             |$propertyCalls
+             |$returnString""".stripMargin)
       case Failure(e: UnknownRelationException) => Future.failed(ParsingException(e.getMessage, e))
       case Failure(e) => Future.failed(e)
     }
