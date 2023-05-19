@@ -73,6 +73,22 @@ client.query({
     description: "Geschlecht",
     section: "Allgemein"
   })
+  basicProperties.set("pc", {
+    name: "pc",
+    valueType: "Percentage",
+    shortDisplayName: "ak",
+    displayName: "Ahnenverlust-Koeffizient",
+    description: "Ahnenverlust-Koeffizient",
+    section: "Allgemein"
+  })
+  basicProperties.set("coi", {
+    name: "coi",
+    valueType: "Percentage",
+    shortDisplayName: "ik",
+    displayName: "Inzucht-Koeffizient",
+    description: "Inzucht-Koeffizient",
+    section: "Allgemein"
+  })
 
   const allProperties = new Map(Array.from(basicProperties.entries()).map(([key, property]) => [key, new BasicProperty(property)]))
   // allProperties.set("litterId", new ObjectDerivedProperty("litter", "id",

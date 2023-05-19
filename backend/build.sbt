@@ -32,5 +32,7 @@ lazy val root = (project in file("."))
     ),
     assembly / mainClass := Some("de.zpro.backend.Starter"),
     scalacOptions ++= Seq("-deprecation", "-feature"),
-    coverageExcludedPackages := "<empty>;de.zpro.backend*;de.zpro.backend.load*;de.zpro.backend.graphql*"
+    coverageExcludedPackages := "<empty>;de.zpro.backend*;de.zpro.backend.load*;de.zpro.backend.graphql*",
+    coverageFailOnMinimum := true,
+    coverageMinimumStmtTotal := 95
   )

@@ -13,9 +13,6 @@ export default function DogView() {
   const graphqlRequest = gql`
       query Dog($id: String!) {
           dog(id: $id) {
-              fullName
-              name
-              gender
               litter {
                   ${DataFields.basicLitterFields.join(" ")}
                   kennel {

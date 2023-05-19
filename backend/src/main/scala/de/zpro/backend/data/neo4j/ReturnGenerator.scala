@@ -7,21 +7,26 @@ private trait ReturnGenerator {
 }
 
 private object ReturnGenerator extends ReturnGenerator {
+  private val complexProperties = ComplexPropertyGenerator.complexFields
+
   override def generateReturnString(from: RequestObject): String =
-    s"WITH ${generateWithFilter(from)} RETURN ${generateReturnPhrase(from)}"
+    s"""WITH ${generateWithFilter(from)}
+       |RETURN ${generateReturnPhrase(from)}""".stripMargin
 
   private def generateWithFilter(node: RequestObject): String =
-    (node.name +: node.allChildren.map(childObject)).mkString(", ")
+    node.all.map(childObject).mkString(", ")
 
   private def childObject(child: RequestObject): String =
     s"{${childProperties(child)}} AS ${child.name}"
 
   private def childProperties(child: RequestObject): String =
-    child.simpleFields.map(propertyName => s"$propertyName: ${child.name}.$propertyName").mkString(", ")
+    child.simpleFields.map(generateMapProperty(child.name, _)).mkString(", ")
+
+  private def generateMapProperty(nodeName: String, propertyName: String): String = {
+    val link = if (complexProperties.contains(propertyName)) '_' else '.'
+    s"$propertyName: $nodeName$link$propertyName"
+  }
 
   private def generateReturnPhrase(node: RequestObject): String =
-    (rootNodeProperties(node) +: node.allChildren.map(child => s"COLLECT(${child.name}) AS ${child.name}")).mkString(", ")
-
-  private def rootNodeProperties(node: RequestObject): String =
-    node.simpleFields.map(field => s"${node.name}.$field AS $field").mkString(", ")
+    (node.name +: node.allChildren.map(child => s"COLLECT(${child.name}) AS ${child.name}")).mkString(", ")
 }

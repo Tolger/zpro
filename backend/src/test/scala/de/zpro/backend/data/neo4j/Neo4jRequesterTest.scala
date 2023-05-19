@@ -19,10 +19,11 @@ import scala.util.{Failure, Success}
 class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFactory with ScalaFutures {
   "A Neo4jRequester" should "request a list of nodes" in {
     val matchGenerator = mock[MatchGenerator]
+    val complexGenerator = mock[ComplexPropertyGenerator]
     val returnGenerator = mock[ReturnGenerator]
     val connection = mock[Neo4jConnection]
     val parser = mock[RecordParser]
-    val requester = new Neo4jRequester(matchGenerator, returnGenerator, parser, connection)
+    val requester = new Neo4jRequester(matchGenerator, complexGenerator, returnGenerator, parser, connection)
 
     val fields = Map(
       "prop1" -> new StringValue("stringValue"),
@@ -31,10 +32,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val request = RequestObject("name", None, "Test", fields.keys.toList, List())
     val response = List(new InternalRecord(fields.keys.toList.asJava, fields.values.toArray))
     val result = List(DbResult("Test", fields))
+    val expectedRequest =
+      """MATCH
+        |
+        |CALLS
+        |RETURN""".stripMargin
 
+    (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Success("MATCH")).once()
+    (complexGenerator.generateComplex _).expects(request).returns("CALLS").once()
     (returnGenerator.generateReturnString _).expects(request).returns("RETURN").once()
-    (connection.executeRequest _).expects("MATCH  RETURN").returns(Future.successful(response)).once()
+    (connection.executeRequest _).expects(expectedRequest).returns(Future.successful(response)).once()
     (parser.parseResult _).expects(response, request).returns(result).once()
 
     val requestFuture = requester.getNodes(request)
@@ -45,10 +53,11 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
 
   it should "request a single node" in {
     val matchGenerator = mock[MatchGenerator]
+    val complexGenerator = mock[ComplexPropertyGenerator]
     val returnGenerator = mock[ReturnGenerator]
     val connection = mock[Neo4jConnection]
     val parser = mock[RecordParser]
-    val requester = new Neo4jRequester(matchGenerator, returnGenerator, parser, connection)
+    val requester = new Neo4jRequester(matchGenerator, complexGenerator, returnGenerator, parser, connection)
 
     val fields1 = Map(
       "prop1" -> new StringValue("value1"),
@@ -63,10 +72,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val response = fields.map(f => new InternalRecord(f.keys.toList.asJava, f.values.toArray))
     val result = fields.map(f => DbResult("Test", f))
     val id = "node-id"
+    val expectedRequest =
+      s"""MATCH
+         |WHERE name.id = \"$id\"
+         |CALLS
+         |RETURN""".stripMargin
 
+    (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Success("MATCH")).once()
+    (complexGenerator.generateComplex _).expects(request).returns("CALLS").once()
     (returnGenerator.generateReturnString _).expects(request).returns("RETURN").once()
-    (connection.executeRequest _).expects(s"MATCH WHERE name.id = \"$id\" RETURN").returns(Future.successful(response)).once()
+    (connection.executeRequest _).expects(expectedRequest).returns(Future.successful(response)).once()
     (parser.parseResult _).expects(response, request).returns(result).once()
 
     val requestFuture = requester.getNodeById(request, id)
@@ -77,15 +93,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
 
   it should "deal with an invalid relation" in {
     val matchGenerator = mock[MatchGenerator]
+    val complexGenerator = mock[ComplexPropertyGenerator]
     val returnGenerator = mock[ReturnGenerator]
     val connection = mock[Neo4jConnection]
     val parser = mock[RecordParser]
-    val requester = new Neo4jRequester(matchGenerator, returnGenerator, parser, connection)
+    val requester = new Neo4jRequester(matchGenerator, complexGenerator, returnGenerator, parser, connection)
 
     val request = RequestObject("name", None, "Test", List("prop1", "prop2"), List())
     val errorMessage = "Test Message"
     val exception = UnknownRelationException(errorMessage)
 
+    (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Failure(exception)).once()
 
     val requestFuture = requester.getNodes(request)
@@ -96,14 +114,16 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
 
   it should "pass along an unknown error" in {
     val matchGenerator = mock[MatchGenerator]
+    val complexGenerator = mock[ComplexPropertyGenerator]
     val returnGenerator = mock[ReturnGenerator]
     val connection = mock[Neo4jConnection]
     val parser = mock[RecordParser]
-    val requester = new Neo4jRequester(matchGenerator, returnGenerator, parser, connection)
+    val requester = new Neo4jRequester(matchGenerator, complexGenerator, returnGenerator, parser, connection)
 
     val request = RequestObject("name", None, "Test", List("prop1", "prop2"), List())
     case object CustomException extends Exception
 
+    (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Failure(CustomException)).once()
 
     val requestFuture = requester.getNodes(request)
@@ -114,10 +134,11 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
 
   it should "perform a quick search" in {
     val matchGenerator = mock[MatchGenerator]
+    val complexGenerator = mock[ComplexPropertyGenerator]
     val returnGenerator = mock[ReturnGenerator]
     val connection = mock[Neo4jConnection]
     val parser = mock[RecordParser]
-    val requester = new Neo4jRequester(matchGenerator, returnGenerator, parser, connection)
+    val requester = new Neo4jRequester(matchGenerator, complexGenerator, returnGenerator, parser, connection)
 
     val fields1: Map[String, Value] = Map(
       "id" -> new StringValue("id1"),
@@ -159,7 +180,7 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val requester = Neo4jRequester.default(connection)
 
     val motherSimpleProperties = Map(
-      "prop1" -> new StringValue("motherString"))
+      "pc" -> new StringValue("motherString"))
     val motherListProperties = Map(
       "prop2" -> List(new IntegerValue(5), new IntegerValue(1)))
     val motherProperties: Map[String, Value] = motherSimpleProperties ++ motherListProperties.view.mapValues(l => new ListValue(l: _*)).toMap
@@ -186,22 +207,30 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
       "prop7" -> new StringValue("litterString"))
     val listProperties = Map(
       "prop8" -> List(new IntegerValue(4), new IntegerValue(3)))
-    val nodeProperties = Map(
+    val basicProperties: Map[String, Value] = simpleProperties ++ listProperties.view.mapValues(l => new ListValue(l: _*)).toMap
+    val properties = Map(
       "l" -> new ListValue(new MapValue(litterProperties.asJava)),
       "m" -> new ListValue(new MapValue(motherProperties.asJava)),
-      "f" -> new ListValue(new MapValue(fatherProperties.asJava)))
-    val properties: Map[String, Value] = simpleProperties ++ listProperties.view.mapValues(l => new ListValue(l: _*)).toMap
-    val allProperties = properties ++ nodeProperties
-    val (keys, values) = allProperties.unzip
+      "f" -> new ListValue(new MapValue(fatherProperties.asJava)),
+      "d" -> new MapValue(basicProperties.asJava))
+    val (keys, values) = properties.unzip
     val response = List(new InternalRecord(keys.toList.asJava, values.toArray))
-    val request = RequestObject("d", None, "Dog", properties.keys.toList, List(litterRequest))
+    val request = RequestObject("d", None, "Dog", basicProperties.keys.toList, List(litterRequest))
     val dbResult = DbResult("Dog", simpleProperties, listProperties, Map("litter" -> List(litterDbResult)))
 
     val id = "dog-id"
-    val databaseRequest = "MATCH (d:Dog), (d)-[:BornIn]->(l:Litter), (l)-[:Mother]->(m:Dog), (l)-[:Father]->(f:Dog) " +
-      s"WHERE d.id = \"$id\" " +
-      "WITH d, {prop5: l.prop5, prop6: l.prop6} AS l, {prop1: m.prop1, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f " +
-      "RETURN d.prop7 AS prop7, d.prop8 AS prop8, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f"
+    val databaseRequest =
+      s"""MATCH (d:Dog), (d)-[:BornIn]->(l:Litter), (l)-[:Mother]->(m:Dog), (l)-[:Father]->(f:Dog)
+         |WHERE d.id = \"$id\"
+         |CALL {
+         |  WITH m
+         |  MATCH (m)-[:BornIn|Mother|Father*..10]->(ancestor:Dog)
+         |  WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
+         |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
+         |  RETURN toFloat(nUnique) / nAll AS m_pc, nUnique AS m_pcUnique, nAll AS m_pcAll
+         |}
+         |WITH {prop7: d.prop7, prop8: d.prop8} AS d, {prop5: l.prop5, prop6: l.prop6} AS l, {pc: m_pc, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f
+         |RETURN d, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f""".stripMargin
     (connection.executeRequest _).expects(databaseRequest).returns(Future.successful(response)).once()
 
     val requestFuture = requester.getNodeById(request, id)
