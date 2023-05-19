@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="441" statements-invoked="441" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684480546385">
+statement-count="441" statements-invoked="441" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684480664843">
     <packages>
         <package name="de.zpro.backend.data" statement-count="49" statements-invoked="49" statement-rate="100.00">
             <classes>
