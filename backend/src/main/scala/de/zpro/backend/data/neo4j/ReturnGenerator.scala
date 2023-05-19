@@ -10,7 +10,7 @@ private object ReturnGenerator extends ReturnGenerator {
   private val complexProperties = ComplexPropertyGenerator.complexFields
 
   override def generateReturnString(from: RequestObject): String =
-    s"WITH ${generateWithFilter(from)} RETURN ${generateReturnPhrase(from)}"
+    s"WITH ${generateWithFilter(from)}\r\nRETURN ${generateReturnPhrase(from)}"
 
   private def generateWithFilter(node: RequestObject): String =
     (node.name +: node.allChildren.map(childObject)).mkString(", ")

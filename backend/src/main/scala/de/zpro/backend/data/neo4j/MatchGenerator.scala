@@ -10,17 +10,9 @@ private trait MatchGenerator {
   def generateMatchString(from: RequestObject): Try[String]
 }
 
-private object MatchGenerator {
-  def default: MatchGenerator = MatchGeneratorImpl(ComplexPropertyGenerator)
-}
-
-private case class MatchGeneratorImpl(complexGenerator: ComplexPropertyGenerator) extends MatchGenerator {
-  override def generateMatchString(from: RequestObject): Try[String] = {
-    val simpleFieldsRequest = complexGenerator.filterOutComplex(from)
-    val simpleNodes = processNode(simpleFieldsRequest)
-    val propertyCalls = complexGenerator.generateComplex(from)
-    simpleNodes.map(nodes => s"MATCH $nodes $propertyCalls")
-  }
+private object MatchGenerator extends MatchGenerator {
+  override def generateMatchString(from: RequestObject): Try[String] =
+    processNode(from).map(nodes => s"MATCH $nodes")
 
   private def processNode(node: RequestObject, parent: Option[RequestObject] = None): Try[String] =
     (fromObject(node, parent) +: node.children.map(processNode(_, Some(node))))

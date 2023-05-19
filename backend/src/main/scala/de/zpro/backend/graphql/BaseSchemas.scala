@@ -68,7 +68,10 @@ private trait BaseSchemas {
         resolve = _.value("pcUnique").asDouble),
       Field(name = "pcAll",
         fieldType = FloatType,
-        resolve = _.value("pcAll").asDouble)
+        resolve = _.value("pcAll").asDouble),
+      Field(name = "coi",
+        fieldType = FloatType,
+        resolve = _.value("pc").asDouble)
     )
   )
 
