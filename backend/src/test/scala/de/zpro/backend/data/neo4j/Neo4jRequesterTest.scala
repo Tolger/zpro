@@ -197,15 +197,15 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
       "prop7" -> new StringValue("litterString"))
     val listProperties = Map(
       "prop8" -> List(new IntegerValue(4), new IntegerValue(3)))
-    val nodeProperties = Map(
+    val basicProperties: Map[String, Value] = simpleProperties ++ listProperties.view.mapValues(l => new ListValue(l: _*)).toMap
+    val properties = Map(
       "l" -> new ListValue(new MapValue(litterProperties.asJava)),
       "m" -> new ListValue(new MapValue(motherProperties.asJava)),
-      "f" -> new ListValue(new MapValue(fatherProperties.asJava)))
-    val properties: Map[String, Value] = simpleProperties ++ listProperties.view.mapValues(l => new ListValue(l: _*)).toMap
-    val allProperties = properties ++ nodeProperties
-    val (keys, values) = allProperties.unzip
+      "f" -> new ListValue(new MapValue(fatherProperties.asJava)),
+      "d" -> new MapValue(basicProperties.asJava))
+    val (keys, values) = properties.unzip
     val response = List(new InternalRecord(keys.toList.asJava, values.toArray))
-    val request = RequestObject("d", None, "Dog", properties.keys.toList, List(litterRequest))
+    val request = RequestObject("d", None, "Dog", basicProperties.keys.toList, List(litterRequest))
     val dbResult = DbResult("Dog", simpleProperties, listProperties, Map("litter" -> List(litterDbResult)))
 
     val id = "dog-id"
@@ -219,8 +219,8 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
          |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
          |  RETURN toFloat(nUnique) / nAll AS m_pc, nUnique AS m_pcUnique, nAll AS m_pcAll
          |}
-         |WITH d, {prop5: l.prop5, prop6: l.prop6} AS l, {pc: m_pc, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f
-         |RETURN d.prop7 AS prop7, d.prop8 AS prop8, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f""".stripMargin
+         |WITH {prop7: d.prop7, prop8: d.prop8} AS d, {prop5: l.prop5, prop6: l.prop6} AS l, {pc: m_pc, prop2: m.prop2} AS m, {prop3: f.prop3, prop4: f.prop4} AS f
+         |RETURN d, COLLECT(l) AS l, COLLECT(m) AS m, COLLECT(f) AS f""".stripMargin
     (connection.executeRequest _).expects(databaseRequest).returns(Future.successful(response)).once()
 
     val requestFuture = requester.getNodeById(request, id)

@@ -18,7 +18,7 @@ private object ComplexPropertyGenerator extends ComplexPropertyGenerator {
     request.copy(simpleFields = request.simpleFields.diff(complexFields), children = request.children.map(filterOutComplex))
 
   override def generateComplex(request: RequestObject): String =
-    (request +: request.allChildren).flatMap(generateNode).mkString(" ")
+    request.all.flatMap(generateNode).mkString(" ")
 
   private def generateNode(property: RequestObject): List[String] =
     addPcIfNeeded(property).toList ++ addCoiIfNeeded(property)

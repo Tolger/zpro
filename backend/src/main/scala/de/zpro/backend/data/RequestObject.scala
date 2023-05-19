@@ -57,4 +57,5 @@ private object RequestObject extends RequestObjectParser {
 case class RequestObject(name: String, fieldName: Option[String], dataType: String,
                          simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) {
   lazy val allChildren: List[RequestObject] = children ++ children.flatMap(_.allChildren)
+  lazy val all: List[RequestObject] = this +: allChildren
 }
