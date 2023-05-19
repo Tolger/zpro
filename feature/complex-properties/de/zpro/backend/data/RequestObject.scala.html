@@ -81,7 +81,8 @@
 </span>57 <span style=''>case class RequestObject(name: String, fieldName: Option[String], dataType: String,
 </span>58 <span style=''>                         simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) {
 </span>59 <span style=''>  lazy val allChildren: List[RequestObject] = children ++ children.flatMap(_.allChildren)
-</span>60 <span style=''>}
+</span>60 <span style=''>  lazy val all: List[RequestObject] = this +: allChildren
+</span>61 <span style=''>}
 </span></pre>
           </div>
           <div class="tab-pane" id="statementlist">
