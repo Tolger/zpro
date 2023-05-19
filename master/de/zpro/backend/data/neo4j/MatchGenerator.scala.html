@@ -88,31 +88,7 @@
           15
         </td>
         <td>
-          52
-        </td>
-        <td>
-          456
-          -
-          503
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          scala.util.Try.map
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          MatchGenerator.this.processNode(from, MatchGenerator.this.processNode$default$2).map[String](((nodes: String) =&gt; &quot;MATCH &quot;.+(nodes)))
-        </td>
-      </tr><tr>
-        <td>
-          15
-        </td>
-        <td>
-          51
+          86
         </td>
         <td>
           456
@@ -126,17 +102,41 @@
           de.zpro.backend.data.neo4j.MatchGenerator.processNode$default$2
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           MatchGenerator.this.processNode$default$2
         </td>
       </tr><tr>
         <td>
+          15
+        </td>
+        <td>
+          87
+        </td>
+        <td>
+          456
+          -
+          503
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Try.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          MatchGenerator.this.processNode(from, MatchGenerator.this.processNode$default$2).map[String](((nodes: String) =&gt; &quot;MATCH &quot;.+(nodes)))
+        </td>
+      </tr><tr>
+        <td>
           18
         </td>
         <td>
-          53
+          88
         </td>
         <td>
           635
@@ -150,7 +150,7 @@
           scala.collection.SeqOps.+:
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           node.children.map[scala.util.Try[String]](((x$1: de.zpro.backend.data.RequestObject) =&gt; MatchGenerator.this.processNode(x$1, scala.Some.apply[de.zpro.backend.data.RequestObject](node)))).+:[scala.util.Try[String]](rassoc$1)
@@ -160,34 +160,7 @@
           19
         </td>
         <td>
-          55
-        </td>
-        <td>
-          609
-          -
-          722
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          scala.util.Try.map
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          de.zpro.backend.util.Extensions.TryIterable[String, List, scala.util.Try]({
-  final &lt;synthetic&gt; &lt;artifact&gt; val rassoc$1: scala.util.Try[String] = MatchGenerator.this.fromObject(node, parent);
-  node.children.map[scala.util.Try[String]](((x$1: de.zpro.backend.data.RequestObject) =&gt; MatchGenerator.this.processNode(x$1, scala.Some.apply[de.zpro.backend.data.RequestObject](node)))).+:[scala.util.Try[String]](rassoc$1)
-}).sequence.map[String](((x$2: List[String]) =&gt; x$2.mkString(&quot;, &quot;)))
-        </td>
-      </tr><tr>
-        <td>
-          19
-        </td>
-        <td>
-          54
+          89
         </td>
         <td>
           705
@@ -201,46 +174,22 @@
           scala.collection.IterableOnceOps.mkString
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           x$2.mkString(&quot;, &quot;)
         </td>
       </tr><tr>
         <td>
-          22
+          19
         </td>
         <td>
-          56
+          90
         </td>
         <td>
-          855
+          609
           -
-          871
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.MatchGenerator.singleNode
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          MatchGenerator.this.singleNode(node)
-        </td>
-      </tr><tr>
-        <td>
-          22
-        </td>
-        <td>
-          58
-        </td>
-        <td>
-          820
-          -
-          872
+          722
         </td>
         <td>
           Apply
@@ -249,17 +198,20 @@
           scala.util.Try.map
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
-          MatchGenerator.this.handleParent(parent, node).map[String](((x$3: String) =&gt; x$3.+(MatchGenerator.this.singleNode(node))))
+          de.zpro.backend.util.Extensions.TryIterable[String, List, scala.util.Try]({
+  final &lt;synthetic&gt; &lt;artifact&gt; val rassoc$1: scala.util.Try[String] = MatchGenerator.this.fromObject(node, parent);
+  node.children.map[scala.util.Try[String]](((x$1: de.zpro.backend.data.RequestObject) =&gt; MatchGenerator.this.processNode(x$1, scala.Some.apply[de.zpro.backend.data.RequestObject](node)))).+:[scala.util.Try[String]](rassoc$1)
+}).sequence.map[String](((x$2: List[String]) =&gt; x$2.mkString(&quot;, &quot;)))
         </td>
       </tr><tr>
         <td>
           22
         </td>
         <td>
-          57
+          92
         </td>
         <td>
           851
@@ -273,89 +225,65 @@
           java.lang.String.+
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           x$3.+(MatchGenerator.this.singleNode(node))
         </td>
       </tr><tr>
         <td>
-          25
+          22
         </td>
         <td>
-          59
+          91
         </td>
         <td>
-          1028
+          855
           -
-          1043
-        </td>
-        <td>
-          Select
-        </td>
-        <td>
-          de.zpro.backend.data.RequestObject.dataType
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          parent.dataType
-        </td>
-      </tr><tr>
-        <td>
-          25
-        </td>
-        <td>
-          62
-        </td>
-        <td>
-          1019
-          -
-          1081
+          871
         </td>
         <td>
           Apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.MatchGenerator.Relation.apply
+          de.zpro.backend.data.neo4j.MatchGenerator.singleNode
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
-          MatchGenerator.this.Relation.apply(parent.dataType, child.dataType, child.fieldName.get)
+          MatchGenerator.this.singleNode(node)
         </td>
       </tr><tr>
         <td>
-          25
+          22
         </td>
         <td>
-          61
+          93
         </td>
         <td>
-          1061
+          820
           -
-          1080
+          872
         </td>
         <td>
-          Select
+          Apply
         </td>
         <td>
-          scala.Option.get
+          scala.util.Try.map
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
-          child.fieldName.get
+          MatchGenerator.this.handleParent(parent, node).map[String](((x$3: String) =&gt; x$3.+(MatchGenerator.this.singleNode(node))))
         </td>
       </tr><tr>
         <td>
           25
         </td>
         <td>
-          60
+          95
         </td>
         <td>
           1045
@@ -369,7 +297,7 @@
           de.zpro.backend.data.RequestObject.dataType
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           child.dataType
@@ -379,7 +307,7 @@
           25
         </td>
         <td>
-          63
+          98
         </td>
         <td>
           994
@@ -393,17 +321,89 @@
           de.zpro.backend.data.neo4j.MatchGenerator.parentConnection
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           MatchGenerator.this.parentConnection(parent, MatchGenerator.this.Relation.apply(parent.dataType, child.dataType, child.fieldName.get))
         </td>
       </tr><tr>
         <td>
+          25
+        </td>
+        <td>
+          94
+        </td>
+        <td>
+          1028
+          -
+          1043
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.dataType
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          parent.dataType
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          97
+        </td>
+        <td>
+          1019
+          -
+          1081
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.MatchGenerator.Relation.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          MatchGenerator.this.Relation.apply(parent.dataType, child.dataType, child.fieldName.get)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          96
+        </td>
+        <td>
+          1061
+          -
+          1080
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Option.get
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          child.fieldName.get
+        </td>
+      </tr><tr>
+        <td>
           26
         </td>
         <td>
-          65
+          100
         </td>
         <td>
           973
@@ -417,7 +417,7 @@
           scala.Option.getOrElse
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           parent.map[scala.util.Try[String]](((parent: de.zpro.backend.data.RequestObject) =&gt; MatchGenerator.this.parentConnection(parent, MatchGenerator.this.Relation.apply(parent.dataType, child.dataType, child.fieldName.get)))).getOrElse[scala.util.Try[String]](scala.util.Success.apply[String](&quot;&quot;))
@@ -427,7 +427,7 @@
           26
         </td>
         <td>
-          64
+          99
         </td>
         <td>
           1101
@@ -441,7 +441,7 @@
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;&quot;)
@@ -451,7 +451,7 @@
           29
         </td>
         <td>
-          66
+          101
         </td>
         <td>
           1217
@@ -465,7 +465,7 @@
           scala.util.Try.map
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           MatchGenerator.this.generate(relation).map[String](((relation: String) =&gt; &quot;(&quot;.+(connectedParent.name).+(&quot;)&quot;).+(relation)))
@@ -475,7 +475,7 @@
           35
         </td>
         <td>
-          68
+          103
         </td>
         <td>
           1538
@@ -489,7 +489,7 @@
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;-[:BornIn]-&gt;&quot;)
@@ -499,7 +499,7 @@
           35
         </td>
         <td>
-          67
+          102
         </td>
         <td>
           1538
@@ -513,7 +513,7 @@
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;-[:BornIn]-&gt;&quot;)
@@ -523,7 +523,7 @@
           36
         </td>
         <td>
-          70
+          104
         </td>
         <td>
           1609
@@ -531,7 +531,7 @@
           1631
         </td>
         <td>
-          Block
+          Apply
         </td>
         <td>
           scala.util.Success.apply
@@ -547,7 +547,7 @@
           36
         </td>
         <td>
-          69
+          105
         </td>
         <td>
           1609
@@ -555,7 +555,7 @@
           1631
         </td>
         <td>
-          Apply
+          Block
         </td>
         <td>
           scala.util.Success.apply
@@ -571,7 +571,7 @@
           37
         </td>
         <td>
-          71
+          107
         </td>
         <td>
           1683
@@ -579,7 +579,7 @@
           1706
         </td>
         <td>
-          Apply
+          Block
         </td>
         <td>
           scala.util.Success.apply
@@ -595,7 +595,7 @@
           37
         </td>
         <td>
-          72
+          106
         </td>
         <td>
           1683
@@ -603,7 +603,7 @@
           1706
         </td>
         <td>
-          Block
+          Apply
         </td>
         <td>
           scala.util.Success.apply
@@ -619,7 +619,7 @@
           38
         </td>
         <td>
-          74
+          109
         </td>
         <td>
           1758
@@ -643,7 +643,7 @@
           38
         </td>
         <td>
-          73
+          108
         </td>
         <td>
           1758
@@ -667,7 +667,7 @@
           39
         </td>
         <td>
-          76
+          110
         </td>
         <td>
           1830
@@ -675,13 +675,13 @@
           1853
         </td>
         <td>
-          Block
+          Apply
         </td>
         <td>
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;-[:Mother]-&gt;&quot;)
@@ -691,7 +691,7 @@
           39
         </td>
         <td>
-          75
+          111
         </td>
         <td>
           1830
@@ -699,13 +699,13 @@
           1853
         </td>
         <td>
-          Apply
+          Block
         </td>
         <td>
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;-[:Mother]-&gt;&quot;)
@@ -715,31 +715,7 @@
           40
         </td>
         <td>
-          77
-        </td>
-        <td>
-          1902
-          -
-          1925
-        </td>
-        <td>
-          Apply
-        </td>
-        <td>
-          scala.util.Success.apply
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
-        </td>
-        <td style="background: #AEF1AE">
-          scala.util.Success.apply[String](&quot;-[:Father]-&gt;&quot;)
-        </td>
-      </tr><tr>
-        <td>
-          40
-        </td>
-        <td>
-          78
+          113
         </td>
         <td>
           1902
@@ -753,7 +729,31 @@
           scala.util.Success.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.neo4jrequestertest
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](&quot;-[:Father]-&gt;&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          112
+        </td>
+        <td>
+          1902
+          -
+          1925
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.util.Success.apply[String](&quot;-[:Father]-&gt;&quot;)
@@ -763,7 +763,7 @@
           41
         </td>
         <td>
-          80
+          115
         </td>
         <td>
           1978
@@ -787,7 +787,7 @@
           41
         </td>
         <td>
-          79
+          114
         </td>
         <td>
           1978
@@ -811,7 +811,7 @@
           42
         </td>
         <td>
-          82
+          116
         </td>
         <td>
           2048
@@ -819,7 +819,7 @@
           2070
         </td>
         <td>
-          Block
+          Apply
         </td>
         <td>
           scala.util.Success.apply
@@ -835,7 +835,7 @@
           42
         </td>
         <td>
-          81
+          117
         </td>
         <td>
           2048
@@ -843,7 +843,7 @@
           2070
         </td>
         <td>
-          Apply
+          Block
         </td>
         <td>
           scala.util.Success.apply
@@ -859,7 +859,31 @@
           43
         </td>
         <td>
-          83
+          119
+        </td>
+        <td>
+          2085
+          -
+          2192
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.matchgeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.UnknownRelationException.apply(&quot;Can\'t determine relation type for unrecognized relation \&quot;&quot;.+(relation).+(&quot;\&quot;&quot;)))
+        </td>
+      </tr><tr>
+        <td>
+          43
+        </td>
+        <td>
+          118
         </td>
         <td>
           2093
@@ -883,7 +907,7 @@
           43
         </td>
         <td>
-          85
+          120
         </td>
         <td>
           2085
@@ -892,30 +916,6 @@
         </td>
         <td>
           Block
-        </td>
-        <td>
-          scala.util.Failure.apply
-        </td>
-        <td>
-          de.zpro.backend.data.neo4j.matchgeneratortest
-        </td>
-        <td style="background: #AEF1AE">
-          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.UnknownRelationException.apply(&quot;Can\'t determine relation type for unrecognized relation \&quot;&quot;.+(relation).+(&quot;\&quot;&quot;)))
-        </td>
-      </tr><tr>
-        <td>
-          43
-        </td>
-        <td>
-          84
-        </td>
-        <td>
-          2085
-          -
-          2192
-        </td>
-        <td>
-          Apply
         </td>
         <td>
           scala.util.Failure.apply
