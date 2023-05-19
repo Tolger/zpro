@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="441" statements-invoked="441" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684480664843">
+statement-count="441" statements-invoked="441" statement-rate="100.00" branch-rate="100.00" version="1.0" timestamp="1684480747628">
     <packages>
         <package name="de.zpro.backend.data" statement-count="49" statements-invoked="49" statement-rate="100.00">
             <classes>
@@ -134,7 +134,7 @@ statement-count="441" statements-invoked="441" statement-rate="100.00" branch-ra
                                 package="de.zpro.backend.data" class="RequestObject" class-type="Object" full-class-name="de.zpro.backend.data.RequestObject" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/RequestObject.scala" method="generateFromFields" start="837" end="837" line="19" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data" class="RequestObject" class-type="Object" full-class-name="de.zpro.backend.data.RequestObject" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/RequestObject.scala" method="generateFromFields" start="1078" end="1103" line="25" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data" class="RequestObject" class-type="Object" full-class-name="de.zpro.backend.data.RequestObject" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/RequestObject.scala" method="generateFromFields" start="1078" end="1103" line="25" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data" class="RequestObject" class-type="Object" full-class-name="de.zpro.backend.data.RequestObject" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/RequestObject.scala" method="generateFromFields" start="898" end="1147" line="20" branch="false" invocation-count="1" ignored="false">
