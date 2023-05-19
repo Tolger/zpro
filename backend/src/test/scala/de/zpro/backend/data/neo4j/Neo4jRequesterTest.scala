@@ -32,12 +32,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val request = RequestObject("name", None, "Test", fields.keys.toList, List())
     val response = List(new InternalRecord(fields.keys.toList.asJava, fields.values.toArray))
     val result = List(DbResult("Test", fields))
+    val expectedRequest =
+      """MATCH
+        |
+        |CALLS
+        |RETURN""".stripMargin
 
     (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Success("MATCH")).once()
     (complexGenerator.generateComplex _).expects(request).returns("CALLS").once()
     (returnGenerator.generateReturnString _).expects(request).returns("RETURN").once()
-    (connection.executeRequest _).expects("MATCH\r\n\r\nCALLS\r\nRETURN").returns(Future.successful(response)).once()
+    (connection.executeRequest _).expects(expectedRequest).returns(Future.successful(response)).once()
     (parser.parseResult _).expects(response, request).returns(result).once()
 
     val requestFuture = requester.getNodes(request)
@@ -67,12 +72,17 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val response = fields.map(f => new InternalRecord(f.keys.toList.asJava, f.values.toArray))
     val result = fields.map(f => DbResult("Test", f))
     val id = "node-id"
+    val expectedRequest =
+      s"""MATCH
+         |WHERE name.id = \"$id\"
+         |CALLS
+         |RETURN""".stripMargin
 
     (complexGenerator.filterOutComplex _).expects(request).returns(request).once()
     (matchGenerator.generateMatchString _).expects(request).returns(Success("MATCH")).once()
     (complexGenerator.generateComplex _).expects(request).returns("CALLS").once()
     (returnGenerator.generateReturnString _).expects(request).returns("RETURN").once()
-    (connection.executeRequest _).expects(s"MATCH\r\nWHERE name.id = \"$id\"\r\nCALLS\r\nRETURN").returns(Future.successful(response)).once()
+    (connection.executeRequest _).expects(expectedRequest).returns(Future.successful(response)).once()
     (parser.parseResult _).expects(response, request).returns(result).once()
 
     val requestFuture = requester.getNodeById(request, id)

@@ -40,7 +40,11 @@ class Neo4jRequester(matchGenerator: MatchGenerator, complexGenerator: ComplexPr
       case Success(matchString) =>
         val propertyCalls = complexGenerator.generateComplex(details)
         val returnString = returnGenerator.generateReturnString(details)
-        Future.successful(s"$matchString\r\n$whereString\r\n$propertyCalls\r\n$returnString")
+        Future.successful(
+          s"""$matchString
+             |$whereString
+             |$propertyCalls
+             |$returnString""".stripMargin)
       case Failure(e: UnknownRelationException) => Future.failed(ParsingException(e.getMessage, e))
       case Failure(e) => Future.failed(e)
     }
