@@ -42,7 +42,7 @@
 </span>18 <span style=''>    </span><span style='background: #AEF1AE'>request.copy(simpleFields = request.simpleFields.diff(complexFields), children = request.children.map(filterOutComplex))</span><span style=''>
 </span>19 <span style=''>
 </span>20 <span style=''>  override def generateComplex(request: RequestObject): String =
-</span>21 <span style=''>    </span><span style='background: #AEF1AE'>(request +: request.allChildren).flatMap(generateNode).mkString(&quot;, &quot;)</span><span style=''>
+</span>21 <span style=''>    </span><span style='background: #AEF1AE'>request.all.flatMap(generateNode).mkString(&quot; &quot;)</span><span style=''>
 </span>22 <span style=''>
 </span>23 <span style=''>  private def generateNode(property: RequestObject): List[String] =
 </span>24 <span style=''>    </span><span style='background: #AEF1AE'>addPcIfNeeded(property).toList ++ addCoiIfNeeded(property)</span><span style=''>
@@ -56,36 +56,32 @@
 </span>32 <span style=''>    else </span><span style='background: #AEF1AE'>Some(generateCoefficientOfInbreeding(node.name))</span><span style=''>
 </span>33 <span style=''>
 </span>34 <span style=''>  private def generatePedigreeCollapse(nodeName: String, generations: Int = 5): String =
-</span>35 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;
-</span>36 <span style=''></span><span style='background: #AEF1AE'>       | CALL {
-</span>37 <span style=''></span><span style='background: #AEF1AE'>       |   WITH $nodeName
-</span>38 <span style=''></span><span style='background: #AEF1AE'>       |   MATCH ($nodeName)-[:BornIn|Mother|Father*..${generations * 2}]-&gt;(ancestor:Dog)
-</span>39 <span style=''></span><span style='background: #AEF1AE'>       |   WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
-</span>40 <span style=''></span><span style='background: #AEF1AE'>       |   WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
-</span>41 <span style=''></span><span style='background: #AEF1AE'>       |   RETURN toFloat(nUnique) / nAll AS ${nodeName}_pc, nUnique AS ${nodeName}_pcUnique, nAll AS ${nodeName}_pcAll
-</span>42 <span style=''></span><span style='background: #AEF1AE'>       | }
-</span>43 <span style=''></span><span style='background: #AEF1AE'>       |&quot;&quot;&quot;.stripMargin</span><span style=''>
-</span>44 <span style=''>
-</span>45 <span style=''>  private def generateCoefficientOfInbreeding(nodeName: String, generations: Int = 5): String =
-</span>46 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;
-</span>47 <span style=''></span><span style='background: #AEF1AE'>       | CALL {
-</span>48 <span style=''></span><span style='background: #AEF1AE'>       |   WITH $nodeName
-</span>49 <span style=''></span><span style='background: #AEF1AE'>       |   MATCH ($nodeName)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)
-</span>50 <span style=''></span><span style='background: #AEF1AE'>       |   MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
-</span>51 <span style=''></span><span style='background: #AEF1AE'>       |   MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
-</span>52 <span style=''></span><span style='background: #AEF1AE'>       |   WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths
-</span>53 <span style=''></span><span style='background: #AEF1AE'>       |   WITH [path IN ancestorPaths WHERE NOT
-</span>54 <span style=''></span><span style='background: #AEF1AE'>       |              ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND
-</span>55 <span style=''></span><span style='background: #AEF1AE'>       |                   (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR
-</span>56 <span style=''></span><span style='background: #AEF1AE'>       |                    ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths
-</span>57 <span style=''></span><span style='background: #AEF1AE'>       |   UNWIND ancestorPaths AS dataPoint
-</span>58 <span style=''></span><span style='background: #AEF1AE'>       |   WITH dataPoint.p1 AS p1, dataPoint.p2 as p2
-</span>59 <span style=''></span><span style='background: #AEF1AE'>       |   WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n
-</span>60 <span style=''></span><span style='background: #AEF1AE'>       |   WITH sum(n) AS coi
-</span>61 <span style=''></span><span style='background: #AEF1AE'>       |   RETURN ik AS ${nodeName}_coi
-</span>62 <span style=''></span><span style='background: #AEF1AE'>       | }
-</span>63 <span style=''></span><span style='background: #AEF1AE'>       |&quot;&quot;&quot;.stripMargin</span><span style=''>
-</span>64 <span style=''>}
+</span>35 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;CALL {
+</span>36 <span style=''></span><span style='background: #AEF1AE'>       |  WITH $nodeName
+</span>37 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH ($nodeName)-[:BornIn|Mother|Father*..${generations * 2}]-&gt;(ancestor:Dog)
+</span>38 <span style=''></span><span style='background: #AEF1AE'>       |  WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
+</span>39 <span style=''></span><span style='background: #AEF1AE'>       |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
+</span>40 <span style=''></span><span style='background: #AEF1AE'>       |  RETURN toFloat(nUnique) / nAll AS ${nodeName}_pc, nUnique AS ${nodeName}_pcUnique, nAll AS ${nodeName}_pcAll
+</span>41 <span style=''></span><span style='background: #AEF1AE'>       |}&quot;&quot;&quot;.stripMargin</span><span style=''>
+</span>42 <span style=''>
+</span>43 <span style=''>  private def generateCoefficientOfInbreeding(nodeName: String, generations: Int = 5): String =
+</span>44 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;CALL {
+</span>45 <span style=''></span><span style='background: #AEF1AE'>       |  WITH $nodeName
+</span>46 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH ($nodeName)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)
+</span>47 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
+</span>48 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
+</span>49 <span style=''></span><span style='background: #AEF1AE'>       |  WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths
+</span>50 <span style=''></span><span style='background: #AEF1AE'>       |  WITH [path IN ancestorPaths WHERE NOT
+</span>51 <span style=''></span><span style='background: #AEF1AE'>       |             ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND
+</span>52 <span style=''></span><span style='background: #AEF1AE'>       |                  (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR
+</span>53 <span style=''></span><span style='background: #AEF1AE'>       |                   ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths
+</span>54 <span style=''></span><span style='background: #AEF1AE'>       |  UNWIND ancestorPaths AS dataPoint
+</span>55 <span style=''></span><span style='background: #AEF1AE'>       |  WITH dataPoint.p1 AS p1, dataPoint.p2 as p2
+</span>56 <span style=''></span><span style='background: #AEF1AE'>       |  WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n
+</span>57 <span style=''></span><span style='background: #AEF1AE'>       |  WITH sum(n) AS coi
+</span>58 <span style=''></span><span style='background: #AEF1AE'>       |  RETURN coi AS ${nodeName}_coi
+</span>59 <span style=''></span><span style='background: #AEF1AE'>       |}&quot;&quot;&quot;.stripMargin</span><span style=''>
+</span>60 <span style=''>}
 </span></pre>
           </div>
           <div class="tab-pane" id="statementlist">
@@ -117,7 +113,7 @@
           scala.collection.IterableFactory.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.returngeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.`package`.List.apply[String](&quot;pc&quot;, &quot;pcUnique&quot;, &quot;pcAll&quot;)
@@ -141,7 +137,7 @@
           scala.collection.IterableFactory.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.returngeneratortest
         </td>
         <td style="background: #AEF1AE">
           scala.`package`.List.apply[String](&quot;coi&quot;)
@@ -165,7 +161,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.coiFields
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.returngeneratortest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.coiFields
@@ -189,7 +185,7 @@
           scala.collection.IterableOps.++
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.returngeneratortest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.pcFields.++[String](ComplexPropertyGenerator.this.coiFields)
@@ -396,7 +392,7 @@
         <td>
           750
           -
-          819
+          797
         </td>
         <td>
           Apply
@@ -405,13 +401,10 @@
           scala.collection.IterableOnceOps.mkString
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
-          {
-  final &lt;synthetic&gt; &lt;artifact&gt; val rassoc$1: de.zpro.backend.data.RequestObject = request;
-  request.allChildren.+:[de.zpro.backend.data.RequestObject](rassoc$1)
-}.flatMap[String](((property: de.zpro.backend.data.RequestObject) =&gt; ComplexPropertyGenerator.this.generateNode(property))).mkString(&quot;, &quot;)
+          request.all.flatMap[String](((property: de.zpro.backend.data.RequestObject) =&gt; ComplexPropertyGenerator.this.generateNode(property))).mkString(&quot; &quot;)
         </td>
       </tr><tr>
         <td>
@@ -421,9 +414,9 @@
           65
         </td>
         <td>
-          893
+          871
           -
-          951
+          929
         </td>
         <td>
           Apply
@@ -432,7 +425,7 @@
           scala.collection.IterableOps.++
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.addPcIfNeeded(property).toList.++[String](ComplexPropertyGenerator.this.addCoiIfNeeded(property))
@@ -445,9 +438,9 @@
           64
         </td>
         <td>
-          927
+          905
           -
-          951
+          929
         </td>
         <td>
           Apply
@@ -456,7 +449,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.addCoiIfNeeded
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.addCoiIfNeeded(property)
@@ -469,9 +462,9 @@
           68
         </td>
         <td>
-          1075
+          1053
           -
-          1079
+          1057
         </td>
         <td>
           Select
@@ -480,7 +473,7 @@
           scala.None
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.None
@@ -493,9 +486,9 @@
           67
         </td>
         <td>
-          1028
+          1006
           -
-          1073
+          1051
         </td>
         <td>
           Select
@@ -504,7 +497,7 @@
           scala.collection.immutable.List.isEmpty
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           node.simpleFields.intersect[String](ComplexPropertyGenerator.this.pcFields).isEmpty
@@ -517,9 +510,9 @@
           69
         </td>
         <td>
-          1075
+          1053
           -
-          1079
+          1057
         </td>
         <td>
           Block
@@ -528,7 +521,7 @@
           scala.None
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.None
@@ -541,9 +534,9 @@
           66
         </td>
         <td>
-          1056
+          1034
           -
-          1064
+          1042
         </td>
         <td>
           Select
@@ -552,7 +545,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.pcFields
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.pcFields
@@ -565,9 +558,9 @@
           71
         </td>
         <td>
-          1094
+          1072
           -
-          1094
+          1072
         </td>
         <td>
           Select
@@ -576,7 +569,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generatePedigreeCollapse$default$2
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2
@@ -589,9 +582,9 @@
           74
         </td>
         <td>
-          1089
+          1067
           -
-          1130
+          1108
         </td>
         <td>
           Block
@@ -600,7 +593,7 @@
           scala.Some.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.Some.apply[String](ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2))
@@ -613,9 +606,9 @@
           73
         </td>
         <td>
-          1089
+          1067
           -
-          1130
+          1108
         </td>
         <td>
           Apply
@@ -624,7 +617,7 @@
           scala.Some.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.Some.apply[String](ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2))
@@ -637,9 +630,9 @@
           70
         </td>
         <td>
-          1119
+          1097
           -
-          1128
+          1106
         </td>
         <td>
           Select
@@ -648,7 +641,7 @@
           de.zpro.backend.data.RequestObject.name
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           node.name
@@ -661,9 +654,9 @@
           72
         </td>
         <td>
-          1094
+          1072
           -
-          1129
+          1107
         </td>
         <td>
           Apply
@@ -672,7 +665,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generatePedigreeCollapse
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2)
@@ -685,9 +678,9 @@
           77
         </td>
         <td>
-          1256
+          1234
           -
-          1260
+          1238
         </td>
         <td>
           Select
@@ -696,7 +689,7 @@
           scala.None
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.None
@@ -709,9 +702,9 @@
           76
         </td>
         <td>
-          1208
+          1186
           -
-          1254
+          1232
         </td>
         <td>
           Select
@@ -720,7 +713,7 @@
           scala.collection.immutable.List.isEmpty
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           node.simpleFields.intersect[String](ComplexPropertyGenerator.this.coiFields).isEmpty
@@ -733,9 +726,9 @@
           78
         </td>
         <td>
-          1256
+          1234
           -
-          1260
+          1238
         </td>
         <td>
           Block
@@ -744,7 +737,7 @@
           scala.None
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           scala.None
@@ -757,9 +750,9 @@
           75
         </td>
         <td>
-          1236
+          1214
           -
-          1245
+          1223
         </td>
         <td>
           Select
@@ -768,7 +761,7 @@
           de.zpro.backend.data.neo4j.ComplexPropertyGenerator.coiFields
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
           ComplexPropertyGenerator.this.coiFields
@@ -781,9 +774,9 @@
           83
         </td>
         <td>
-          1270
+          1248
           -
-          1318
+          1296
         </td>
         <td>
           Block
@@ -805,9 +798,9 @@
           80
         </td>
         <td>
-          1275
+          1253
           -
-          1275
+          1253
         </td>
         <td>
           Select
@@ -829,9 +822,9 @@
           82
         </td>
         <td>
-          1270
+          1248
           -
-          1318
+          1296
         </td>
         <td>
           Apply
@@ -853,9 +846,9 @@
           79
         </td>
         <td>
-          1307
+          1285
           -
-          1316
+          1294
         </td>
         <td>
           Select
@@ -877,9 +870,9 @@
           81
         </td>
         <td>
-          1275
+          1253
           -
-          1317
+          1295
         </td>
         <td>
           Apply
@@ -895,15 +888,15 @@
         </td>
       </tr><tr>
         <td>
-          43
+          41
         </td>
         <td>
           84
         </td>
         <td>
-          1413
+          1391
           -
-          1872
+          1825
         </td>
         <td>
           Select
@@ -912,22 +905,22 @@
           scala.collection.StringOps.stripMargin
         </td>
         <td>
-          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+          de.zpro.backend.data.neo4j.neo4jrequestertest
         </td>
         <td style="background: #AEF1AE">
-          scala.Predef.augmentString(&quot;\n       | CALL {\n       |   WITH &quot;.+(nodeName).+(&quot;\n       |   MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn|Mother|Father*..&quot;).+(generations.*(2)).+(&quot;]-&gt;(ancestor:Dog)\n       |   WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors\n       |   WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll\n       |   RETURN toFloat(nUnique) / nAll AS &quot;).+(nodeName).+(&quot;_pc, nUnique AS &quot;).+(nodeName).+(&quot;_pcUnique, nAll AS &quot;).+(nodeName).+(&quot;_pcAll\n       | }\n       |&quot;)).stripMargin
+          scala.Predef.augmentString(&quot;CALL {\n       |  WITH &quot;.+(nodeName).+(&quot;\n       |  MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn|Mother|Father*..&quot;).+(generations.*(2)).+(&quot;]-&gt;(ancestor:Dog)\n       |  WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors\n       |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll\n       |  RETURN toFloat(nUnique) / nAll AS &quot;).+(nodeName).+(&quot;_pc, nUnique AS &quot;).+(nodeName).+(&quot;_pcUnique, nAll AS &quot;).+(nodeName).+(&quot;_pcAll\n       |}&quot;)).stripMargin
         </td>
       </tr><tr>
         <td>
-          63
+          59
         </td>
         <td>
           85
         </td>
         <td>
-          1974
+          1927
           -
-          2948
+          2868
         </td>
         <td>
           Select
@@ -939,7 +932,7 @@
           de.zpro.backend.data.neo4j.complexpropertygeneratortest
         </td>
         <td style="background: #AEF1AE">
-          scala.Predef.augmentString(&quot;\n       | CALL {\n       |   WITH &quot;.+(nodeName).+(&quot;\n       |   MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)\n       |   MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |   MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |   WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths\n       |   WITH [path IN ancestorPaths WHERE NOT\n       |              ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND\n       |                   (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR\n       |                    ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths\n       |   UNWIND ancestorPaths AS dataPoint\n       |   WITH dataPoint.p1 AS p1, dataPoint.p2 as p2\n       |   WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n\n       |   WITH sum(n) AS coi\n       |   RETURN ik AS &quot;).+(nodeName).+(&quot;_coi\n       | }\n       |&quot;)).stripMargin
+          scala.Predef.augmentString(&quot;CALL {\n       |  WITH &quot;.+(nodeName).+(&quot;\n       |  MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)\n       |  MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |  MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |  WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths\n       |  WITH [path IN ancestorPaths WHERE NOT\n       |             ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND\n       |                  (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR\n       |                   ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths\n       |  UNWIND ancestorPaths AS dataPoint\n       |  WITH dataPoint.p1 AS p1, dataPoint.p2 as p2\n       |  WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n\n       |  WITH sum(n) AS coi\n       |  RETURN coi AS &quot;).+(nodeName).+(&quot;_coi\n       |}&quot;)).stripMargin
         </td>
       </tr>
     </table>

@@ -81,7 +81,8 @@
 </span>57 <span style=''>case class RequestObject(name: String, fieldName: Option[String], dataType: String,
 </span>58 <span style=''>                         simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) {
 </span>59 <span style=''>  lazy val allChildren: List[RequestObject] = children ++ children.flatMap(_.allChildren)
-</span>60 <span style=''>}
+</span>60 <span style=''>  lazy val all: List[RequestObject] = this +: allChildren
+</span>61 <span style=''>}
 </span></pre>
           </div>
           <div class="tab-pane" id="statementlist">
@@ -113,7 +114,7 @@
           scala.collection.immutable.List.empty
         </td>
         <td>
-          de.zpro.backend.data.neo4j.recordparsertest
+          de.zpro.backend.data.repositories.propertyrepositorytest
         </td>
         <td style="background: #AEF1AE">
           scala.`package`.List.empty[Nothing]
@@ -137,7 +138,7 @@
           scala.None
         </td>
         <td>
-          de.zpro.backend.data.neo4j.recordparsertest
+          de.zpro.backend.data.repositories.propertyrepositorytest
         </td>
         <td style="background: #AEF1AE">
           scala.None
@@ -161,7 +162,7 @@
           de.zpro.backend.data.RequestObject.apply
         </td>
         <td>
-          de.zpro.backend.data.neo4j.recordparsertest
+          de.zpro.backend.data.repositories.propertyrepositorytest
         </td>
         <td style="background: #AEF1AE">
           RequestObject.apply(&quot;simple&quot;, scala.None, dataType, fields, scala.`package`.List.empty[Nothing])
@@ -185,7 +186,7 @@
           &lt;nosymbol&gt;
         </td>
         <td>
-          de.zpro.backend.data.neo4j.recordparsertest
+          de.zpro.backend.data.repositories.propertyrepositorytest
         </td>
         <td style="background: #AEF1AE">
           &quot;simple&quot;
