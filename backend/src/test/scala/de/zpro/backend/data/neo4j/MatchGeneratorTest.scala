@@ -34,6 +34,16 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
          |OPTIONAL MATCH (d)-[:BornIn]->(l:Litter)""".stripMargin)
   }
 
+  it should "match a dogs litters" in {
+    val generator = MatchGenerator
+    val litter = RequestObject("l", Some("litters"), "Litter", List("prop1", "prop2"), List())
+    val request = RequestObject("d", None, "Dog", List("prop3", "prop4"), List(litter))
+    val response = generator.generateMatchString(request)
+    response.get should be(
+      s"""MATCH (d:Dog)
+         |OPTIONAL MATCH (d)<-[:Mother|Father]-(l:Litter)""".stripMargin)
+  }
+
   it should "match a dogs owner" in {
     val generator = MatchGenerator
     val owner = RequestObject("o", Some("owner"), "Person", List("prop1", "prop2"), List())

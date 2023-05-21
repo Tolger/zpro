@@ -32,6 +32,21 @@ class ExtensionsTest extends AnyFlatSpec with should.Matchers {
     Iterable(Some(3), None, Some(97)).collectDefined should be(Iterable(3, 97))
   }
 
+  it should "sequence a fully defined Map of Options" in {
+    import de.zpro.backend.util.Extensions.OptionMap
+    Map(1 -> Some(3), 2 -> Some(42), 3 -> Some(97)).sequence should be(Some(Map(1 -> 3, 2 -> 42, 3 -> 97)))
+  }
+
+  it should "empty a non fully defined Map of Options" in {
+    import de.zpro.backend.util.Extensions.OptionMap
+    Map(1 -> Some(3), 2 -> None, 3 -> Some(97)).sequence should be(None)
+  }
+
+  it should "collect the defined entries in a Map of Options" in {
+    import de.zpro.backend.util.Extensions.OptionMap
+    Map(1 -> Some(3), 2 -> None, 3 -> Some(97)).collectDefined should be(Map(1 -> 3, 3 -> 97))
+  }
+
   it should "return None for an empty String" in {
     import de.zpro.backend.util.Extensions.OptionString
     "".toOption should be(None)

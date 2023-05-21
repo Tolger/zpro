@@ -70,4 +70,15 @@ class ComplexPropertyGeneratorTest extends AnyFlatSpec with should.Matchers {
     val response = ComplexPropertyGenerator.generateComplex(request)
     response should be(coiResponse("name"))
   }
+
+  it should "filter out complex fields" in {
+    val child = RequestObject("child", Some("c"), "Test", List("simple", "pc", "coi", "simpleAgain"))
+    val request = RequestObject("name", None, "Test", List("pcUnique", "simpleField", "anotherSimpleField"), List(child))
+    val response = ComplexPropertyGenerator.filterOutComplex(request)
+    response should be(
+      RequestObject("name", None, "Test", List("simpleField", "anotherSimpleField"), List(
+        RequestObject("child", Some("c"), "Test", List("simple", "simpleAgain"))
+      ))
+    )
+  }
 }

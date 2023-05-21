@@ -12,6 +12,22 @@ class RequestObjectTest extends AnyFlatSpec with should.Matchers {
     RequestObject.simple("Type", List("f1", "f2")) should be(RequestObject("simple", None, "Type", List("f1", "f2")))
   }
 
+  it should "represent all fields and descendants" in {
+    val grandchild1 = RequestObject("grandchild1", Some("grandchild1"), "Type")
+    val grandchild2 = RequestObject("grandchild2", Some("grandchild2"), "Type")
+    val child = RequestObject("child", Some("child"), "Type", children = List(grandchild1, grandchild2))
+    val request = RequestObject("name", None, "Type", simpleFields = List("s1", "s2"), children = List(child))
+    request.allChildren should be(List(child, grandchild1, grandchild2))
+    request.all should be(List(request, child, grandchild1, grandchild2))
+    request.childFieldNames should be(List("child"))
+    request.containsSimpleField("s2") should be(true)
+    request.containsSimpleField("s3") should be(false)
+    request.containsChildField("child") should be(true)
+    request.containsChildField("nonChild") should be(false)
+    request.getChild("child") should be(Some(child))
+    request.getChild("nonChild") should be(None)
+  }
+
   it should "represent simple graphql fields" in {
     val request = RequestObject.fromGraphqlFields("Type", List(ProjectedName("f1"), ProjectedName("f2")))
     request should be(Success(RequestObject("n", None, "Type", List("f1", "f2"))))
