@@ -1,0 +1,1378 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/neo4j/Neo4jRequester.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.neo4j
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data._
+</span>4 <span style=''>import de.zpro.backend.exceptions.{ParsingException, UnknownRelationException}
+</span>5 <span style=''>
+</span>6 <span style=''>import scala.concurrent.{ExecutionContext, Future}
+</span>7 <span style=''>import scala.util.{Failure, Success, Try}
+</span>8 <span style=''>
+</span>9 <span style=''>object Neo4jRequester {
+</span>10 <span style=''>  // $COVERAGE-OFF$ requires database connection
+</span>11 <span style=''>  def default(implicit context: ExecutionContext): DatabaseRequester = default(Neo4jConnection.default)
+</span>12 <span style=''>  // $COVERAGE-ON$
+</span>13 <span style=''>
+</span>14 <span style=''>  private[neo4j] def default(connection: Neo4jConnection)(implicit context: ExecutionContext): DatabaseRequester =
+</span>15 <span style=''>    </span><span style='background: #AEF1AE'>new Neo4jRequester(MapComprehensionGenerator, RecordParser, connection)</span><span style=''>
+</span>16 <span style=''>}
+</span>17 <span style=''>
+</span>18 <span style=''>class Neo4jRequester(generator: MapComprehensionGenerator, parser: RecordParser,
+</span>19 <span style=''>                     connection: Neo4jConnection)(implicit private val context: ExecutionContext) extends DatabaseRequester {
+</span>20 <span style=''>  override def getNodes(request: RequestObject): Future[List[DbResult]] =
+</span>21 <span style=''>    </span><span style='background: #AEF1AE'>run(request)</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>  override def getNodeById(request: RequestObject, id: String): Future[Option[DbResult]] = // TODO Log warning on multiple
+</span>24 <span style=''>    </span><span style='background: #AEF1AE'>run(request, Some(id))
+</span>25 <span style=''></span><span style='background: #AEF1AE'>      .map(_.headOption)</span><span style=''>
+</span>26 <span style=''>
+</span>27 <span style=''>  override def quickSearch(query: String, limit: Int): Future[List[DbResult]] =
+</span>28 <span style=''>    </span><span style='background: #AEF1AE'>runQuickSearch(s&quot;CALL db.index.fulltext.queryNodes(\&quot;quickSearchIndex\&quot;, \&quot;$query\&quot;) YIELD node, score RETURN * LIMIT $limit&quot;)</span><span style=''>
+</span>29 <span style=''>
+</span>30 <span style=''>  private def run(details: RequestObject, id: Option[String] = None): Future[List[DbResult]] =
+</span>31 <span style=''>    </span><span style='background: #AEF1AE'>buildRequest(details, id)</span><span style=''> match {
+</span>32 <span style=''>      case Success(request) =&gt;
+</span>33 <span style=''>        </span><span style='background: #AEF1AE'>connection.executeRequest(request)
+</span>34 <span style=''></span><span style='background: #AEF1AE'>          .map(records =&gt; parser.parseResult(records, details))</span><span style=''>
+</span>35 <span style=''>      case Failure(e) =&gt; </span><span style='background: #AEF1AE'>Future.failed(e)</span><span style=''>
+</span>36 <span style=''>    }
+</span>37 <span style=''>
+</span>38 <span style=''>  private def buildRequest(details: RequestObject, id: Option[String]): Try[String] =
+</span>39 <span style=''>    </span><span style='background: #AEF1AE'>generator.generateReturn(details)</span><span style=''> match {
+</span>40 <span style=''>      case Success(returnString) =&gt; </span><span style='background: #AEF1AE'>Success(
+</span>41 <span style=''></span><span style='background: #AEF1AE'>        s&quot;&quot;&quot;MATCH (${details.name}:${details.dataType})
+</span>42 <span style=''></span><span style='background: #AEF1AE'>           |${id.map(id =&gt; s&quot;WHERE ${details.name}.id = \&quot;$id\&quot;&quot;).getOrElse(&quot;&quot;)}
+</span>43 <span style=''></span><span style='background: #AEF1AE'>           |$returnString&quot;&quot;&quot;.stripMargin)</span><span style=''>
+</span>44 <span style=''>      case Failure(e: UnknownRelationException) =&gt; </span><span style='background: #AEF1AE'>Failure(ParsingException(e.getMessage, e))</span><span style=''>
+</span>45 <span style=''>      case f: Failure[_] =&gt; </span><span style='background: #AEF1AE'>f</span><span style=''>
+</span>46 <span style=''>    }
+</span>47 <span style=''>
+</span>48 <span style=''>  private def runQuickSearch(request: String): Future[List[DbResult]] = {
+</span>49 <span style=''>    val response = </span><span style='background: #AEF1AE'>connection.executeRequest(request)</span><span style=''>
+</span>50 <span style=''>    </span><span style='background: #AEF1AE'>response.map(records =&gt;
+</span>51 <span style=''></span><span style='background: #AEF1AE'>      records.map(record =&gt; {
+</span>52 <span style=''></span><span style='background: #AEF1AE'>        val result = record.get(&quot;node&quot;).asNode()
+</span>53 <span style=''></span><span style='background: #AEF1AE'>        val node = DbResult(
+</span>54 <span style=''></span><span style='background: #AEF1AE'>          dataType = result.labels().iterator().next(),
+</span>55 <span style=''></span><span style='background: #AEF1AE'>          properties = Map(
+</span>56 <span style=''></span><span style='background: #AEF1AE'>            &quot;id&quot; -&gt; result.get(&quot;id&quot;),
+</span>57 <span style=''></span><span style='background: #AEF1AE'>            &quot;fullName&quot; -&gt; result.get(&quot;fullName&quot;)
+</span>58 <span style=''></span><span style='background: #AEF1AE'>          )
+</span>59 <span style=''></span><span style='background: #AEF1AE'>        )
+</span>60 <span style=''></span><span style='background: #AEF1AE'>        DbResult(
+</span>61 <span style=''></span><span style='background: #AEF1AE'>          dataType = &quot;SearchResult&quot;,
+</span>62 <span style=''></span><span style='background: #AEF1AE'>          properties = Map(&quot;score&quot; -&gt; record.get(&quot;score&quot;)),
+</span>63 <span style=''></span><span style='background: #AEF1AE'>          nodes = Map(&quot;node&quot; -&gt; List(node))
+</span>64 <span style=''></span><span style='background: #AEF1AE'>        )
+</span>65 <span style=''></span><span style='background: #AEF1AE'>      })
+</span>66 <span style=''></span><span style='background: #AEF1AE'>    )</span><span style=''>
+</span>67 <span style=''>  }
+</span>68 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          177
+        </td>
+        <td>
+          556
+          -
+          627
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.&lt;init&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          new Neo4jRequester(MapComprehensionGenerator, RecordParser, connection)(context)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          178
+        </td>
+        <td>
+          916
+          -
+          916
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.run$default$2
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.run$default$2
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          179
+        </td>
+        <td>
+          916
+          -
+          928
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.run
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.run(request, Neo4jRequester.this.run$default$2)
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          180
+        </td>
+        <td>
+          1070
+          -
+          1078
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](id)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          182
+        </td>
+        <td>
+          1090
+          -
+          1090
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.context
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.context
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          181
+        </td>
+        <td>
+          1091
+          -
+          1103
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.LinearSeqOps.headOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$1.headOption
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          183
+        </td>
+        <td>
+          1057
+          -
+          1104
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.run(request, scala.Some.apply[String](id)).map[Option[de.zpro.backend.data.DbResult]](((x$1: List[de.zpro.backend.data.DbResult]) =&gt; x$1.headOption))(Neo4jRequester.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          184
+        </td>
+        <td>
+          1190
+          -
+          1316
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.runQuickSearch
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.runQuickSearch(&quot;CALL db.index.fulltext.queryNodes(\&quot;quickSearchIndex\&quot;, \&quot;&quot;.+(query).+(&quot;\&quot;) YIELD node, score RETURN * LIMIT &quot;).+(limit))
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          185
+        </td>
+        <td>
+          1417
+          -
+          1442
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.buildRequest
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.buildRequest(details, id)
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          187
+        </td>
+        <td>
+          1539
+          -
+          1539
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.context
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.context
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          189
+        </td>
+        <td>
+          1490
+          -
+          1588
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.connection.executeRequest(request).map[List[de.zpro.backend.data.DbResult]](((records: List[org.neo4j.driver.Record]) =&gt; Neo4jRequester.this.parser.parseResult(records, details)))(Neo4jRequester.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          186
+        </td>
+        <td>
+          1551
+          -
+          1587
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.parseResult
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.parser.parseResult(records, details)
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          188
+        </td>
+        <td>
+          1490
+          -
+          1588
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.connection.executeRequest(request).map[List[de.zpro.backend.data.DbResult]](((records: List[org.neo4j.driver.Record]) =&gt; Neo4jRequester.this.parser.parseResult(records, details)))(Neo4jRequester.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          191
+        </td>
+        <td>
+          1614
+          -
+          1630
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](e)
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          190
+        </td>
+        <td>
+          1614
+          -
+          1630
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.concurrent.Future.failed
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.failed[Nothing](e)
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          192
+        </td>
+        <td>
+          1728
+          -
+          1761
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.MapComprehensionGenerator.generateReturn
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.generator.generateReturn(details)
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          194
+        </td>
+        <td>
+          1806
+          -
+          1993
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](scala.Predef.augmentString(&quot;MATCH (&quot;.+(details.name).+(&quot;:&quot;).+(details.dataType).+(&quot;)\n           |&quot;).+(id.map[String](((id: String) =&gt; &quot;WHERE &quot;.+(details.name).+(&quot;.id = \&quot;&quot;).+(id).+(&quot;\&quot;&quot;))).getOrElse[String](&quot;&quot;)).+(&quot;\n           |&quot;).+(returnString)).stripMargin)
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          195
+        </td>
+        <td>
+          1806
+          -
+          1993
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[String](scala.Predef.augmentString(&quot;MATCH (&quot;.+(details.name).+(&quot;:&quot;).+(details.dataType).+(&quot;)\n           |&quot;).+(id.map[String](((id: String) =&gt; &quot;WHERE &quot;.+(details.name).+(&quot;.id = \&quot;&quot;).+(id).+(&quot;\&quot;&quot;))).getOrElse[String](&quot;&quot;)).+(&quot;\n           |&quot;).+(returnString)).stripMargin)
+        </td>
+      </tr><tr>
+        <td>
+          43
+        </td>
+        <td>
+          193
+        </td>
+        <td>
+          1823
+          -
+          1992
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.StringOps.stripMargin
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.augmentString(&quot;MATCH (&quot;.+(details.name).+(&quot;:&quot;).+(details.dataType).+(&quot;)\n           |&quot;).+(id.map[String](((id: String) =&gt; &quot;WHERE &quot;.+(details.name).+(&quot;.id = \&quot;&quot;).+(id).+(&quot;\&quot;&quot;))).getOrElse[String](&quot;&quot;)).+(&quot;\n           |&quot;).+(returnString)).stripMargin
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          196
+        </td>
+        <td>
+          2070
+          -
+          2082
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.Throwable.getMessage
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          e.getMessage()
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          199
+        </td>
+        <td>
+          2045
+          -
+          2087
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.ParsingException.apply(e.getMessage(), e))
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          198
+        </td>
+        <td>
+          2045
+          -
+          2087
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](de.zpro.backend.exceptions.ParsingException.apply(e.getMessage(), e))
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          197
+        </td>
+        <td>
+          2053
+          -
+          2086
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.exceptions.ParsingException.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.exceptions.ParsingException.apply(e.getMessage(), e)
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          200
+        </td>
+        <td>
+          2116
+          -
+          2117
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.Any.asInstanceOf
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          f.asInstanceOf[scala.util.Try[String]]
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          201
+        </td>
+        <td>
+          2116
+          -
+          2117
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Any.asInstanceOf
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          f.asInstanceOf[scala.util.Try[String]]
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          202
+        </td>
+        <td>
+          2218
+          -
+          2252
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jConnection.executeRequest
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.connection.executeRequest(request)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          227
+        </td>
+        <td>
+          2269
+          -
+          2269
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.Neo4jRequester.context
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          Neo4jRequester.this.context
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          228
+        </td>
+        <td>
+          2257
+          -
+          2765
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.neo4jrequestertest
+        </td>
+        <td style="background: #AEF1AE">
+          response.map[List[de.zpro.backend.data.DbResult]](((records: List[org.neo4j.driver.Record]) =&gt; records.map[de.zpro.backend.data.DbResult](((record: org.neo4j.driver.Record) =&gt; {
+  val result: org.neo4j.driver.types.Node = record.get(&quot;node&quot;).asNode();
+  val node: de.zpro.backend.data.DbResult = de.zpro.backend.data.DbResult.apply(result.labels().iterator().next(), scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;id&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;id&quot;)), scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))), de.zpro.backend.data.DbResult.apply$default$3, de.zpro.backend.data.DbResult.apply$default$4);
+  {
+    &lt;artifact&gt; val x$1: String(&quot;SearchResult&quot;) = &quot;SearchResult&quot;;
+    &lt;artifact&gt; val x$2: scala.collection.immutable.Map[String,org.neo4j.driver.Value] @scala.reflect.internal.annotations.uncheckedBounds = scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;)));
+    &lt;artifact&gt; val x$3: scala.collection.immutable.Map[String,List[de.zpro.backend.data.DbResult]] @scala.reflect.internal.annotations.uncheckedBounds = scala.Predef.Map.apply[String, List[de.zpro.backend.data.DbResult]](scala.Predef.ArrowAssoc[String](&quot;node&quot;).-&gt;[List[de.zpro.backend.data.DbResult]](scala.`package`.List.apply[de.zpro.backend.data.DbResult](node)));
+    &lt;artifact&gt; val x$4: Map[String,List[org.neo4j.driver.Value]] @scala.reflect.internal.annotations.uncheckedBounds = de.zpro.backend.data.DbResult.apply$default$3;
+    de.zpro.backend.data.DbResult.apply(&quot;SearchResult&quot;, x$2, x$4, x$3)
+  }
+}))))(Neo4jRequester.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          226
+        </td>
+        <td>
+          2287
+          -
+          2759
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          records.map[de.zpro.backend.data.DbResult](((record: org.neo4j.driver.Record) =&gt; {
+  val result: org.neo4j.driver.types.Node = record.get(&quot;node&quot;).asNode();
+  val node: de.zpro.backend.data.DbResult = de.zpro.backend.data.DbResult.apply(result.labels().iterator().next(), scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;id&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;id&quot;)), scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))), de.zpro.backend.data.DbResult.apply$default$3, de.zpro.backend.data.DbResult.apply$default$4);
+  {
+    &lt;artifact&gt; val x$1: String(&quot;SearchResult&quot;) = &quot;SearchResult&quot;;
+    &lt;artifact&gt; val x$2: scala.collection.immutable.Map[String,org.neo4j.driver.Value] @scala.reflect.internal.annotations.uncheckedBounds = scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;)));
+    &lt;artifact&gt; val x$3: scala.collection.immutable.Map[String,List[de.zpro.backend.data.DbResult]] @scala.reflect.internal.annotations.uncheckedBounds = scala.Predef.Map.apply[String, List[de.zpro.backend.data.DbResult]](scala.Predef.ArrowAssoc[String](&quot;node&quot;).-&gt;[List[de.zpro.backend.data.DbResult]](scala.`package`.List.apply[de.zpro.backend.data.DbResult](node)));
+    &lt;artifact&gt; val x$4: Map[String,List[org.neo4j.driver.Value]] @scala.reflect.internal.annotations.uncheckedBounds = de.zpro.backend.data.DbResult.apply$default$3;
+    de.zpro.backend.data.DbResult.apply(&quot;SearchResult&quot;, x$2, x$4, x$3)
+  }
+}))
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          203
+        </td>
+        <td>
+          2332
+          -
+          2359
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asNode
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          record.get(&quot;node&quot;).asNode()
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          214
+        </td>
+        <td>
+          2379
+          -
+          2581
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply(result.labels().iterator().next(), scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;id&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;id&quot;)), scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))), de.zpro.backend.data.DbResult.apply$default$3, de.zpro.backend.data.DbResult.apply$default$4)
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          213
+        </td>
+        <td>
+          2379
+          -
+          2379
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply$default$4
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply$default$4
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          212
+        </td>
+        <td>
+          2379
+          -
+          2379
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply$default$3
+        </td>
+      </tr><tr>
+        <td>
+          54
+        </td>
+        <td>
+          204
+        </td>
+        <td>
+          2410
+          -
+          2443
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.util.Iterator.next
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.labels().iterator().next()
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          211
+        </td>
+        <td>
+          2468
+          -
+          2571
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;id&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;id&quot;)), scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;)))
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          205
+        </td>
+        <td>
+          2485
+          -
+          2489
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;id&quot;
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          207
+        </td>
+        <td>
+          2485
+          -
+          2509
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](&quot;id&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;id&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          206
+        </td>
+        <td>
+          2493
+          -
+          2509
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.types.MapAccessor.get
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.get(&quot;id&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          209
+        </td>
+        <td>
+          2537
+          -
+          2559
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.types.MapAccessor.get
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.get(&quot;fullName&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          208
+        </td>
+        <td>
+          2523
+          -
+          2533
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;fullName&quot;
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          210
+        </td>
+        <td>
+          2523
+          -
+          2559
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](&quot;fullName&quot;).-&gt;[org.neo4j.driver.Value](result.get(&quot;fullName&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          225
+        </td>
+        <td>
+          2590
+          -
+          2750
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply(&quot;SearchResult&quot;, x$2, x$4, x$3)
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          224
+        </td>
+        <td>
+          2590
+          -
+          2590
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply$default$3
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          215
+        </td>
+        <td>
+          2621
+          -
+          2635
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;SearchResult&quot;
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          218
+        </td>
+        <td>
+          2664
+          -
+          2694
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          217
+        </td>
+        <td>
+          2675
+          -
+          2694
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.types.MapAccessor.get
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          record.get(&quot;score&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          216
+        </td>
+        <td>
+          2664
+          -
+          2671
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;score&quot;
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          219
+        </td>
+        <td>
+          2660
+          -
+          2695
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.Map.apply[String, org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](&quot;score&quot;).-&gt;[org.neo4j.driver.Value](record.get(&quot;score&quot;)))
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          220
+        </td>
+        <td>
+          2719
+          -
+          2725
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;node&quot;
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          223
+        </td>
+        <td>
+          2715
+          -
+          2740
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.Map.apply[String, List[de.zpro.backend.data.DbResult]](scala.Predef.ArrowAssoc[String](&quot;node&quot;).-&gt;[List[de.zpro.backend.data.DbResult]](scala.`package`.List.apply[de.zpro.backend.data.DbResult](node)))
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          222
+        </td>
+        <td>
+          2719
+          -
+          2739
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](&quot;node&quot;).-&gt;[List[de.zpro.backend.data.DbResult]](scala.`package`.List.apply[de.zpro.backend.data.DbResult](node))
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          221
+        </td>
+        <td>
+          2729
+          -
+          2739
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableFactory.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.`package`.List.apply[de.zpro.backend.data.DbResult](node)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

@@ -1,0 +1,1027 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/util/Extensions.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.util
+</span>2 <span style=''>
+</span>3 <span style=''>import scala.collection.IterableOps
+</span>4 <span style=''>import scala.util.{Failure, Success, Try}
+</span>5 <span style=''>
+</span>6 <span style=''>object Extensions extends Extensions
+</span>7 <span style=''>
+</span>8 <span style=''>trait Extensions {
+</span>9 <span style=''>  implicit class TryIterable[A, CC[B] &lt;: IterableOps[B, CC, CC[B]], T[C] &lt;: Try[C]](val coll: CC[T[A]]) {
+</span>10 <span style=''>    def sequence: Try[CC[A]] =
+</span>11 <span style=''>      </span><span style='background: #AEF1AE'>coll.iterator.find(_.isFailure)</span><span style=''> match {
+</span>12 <span style=''>        case Some(Failure(exception)) =&gt; </span><span style='background: #AEF1AE'>Failure(exception)</span><span style=''>
+</span>13 <span style=''>        case None =&gt; </span><span style='background: #AEF1AE'>Success(coll.map(_.get))</span><span style=''>
+</span>14 <span style=''>        // $COVERAGE-OFF$ unreachable
+</span>15 <span style=''>        case _ =&gt; throw new IllegalStateException()
+</span>16 <span style=''>        // $COVERAGE-ON$
+</span>17 <span style=''>      }
+</span>18 <span style=''>  }
+</span>19 <span style=''>
+</span>20 <span style=''>  implicit class OptionIterable[A, CC[B] &lt;: IterableOps[B, CC, CC[B]], O[C] &lt;: Option[C]](val coll: CC[O[A]]) {
+</span>21 <span style=''>    def sequence: Option[CC[A]] =
+</span>22 <span style=''>      if (</span><span style='background: #AEF1AE'>coll.exists(_.isEmpty)</span><span style=''>) </span><span style='background: #AEF1AE'>None</span><span style=''>
+</span>23 <span style=''>      else </span><span style='background: #AEF1AE'>Some(coll.map(_.get))</span><span style=''>
+</span>24 <span style=''>
+</span>25 <span style=''>    def collectDefined: CC[A] = </span><span style='background: #AEF1AE'>coll.collect { case Some(value: A) =&gt; value }</span><span style=''>
+</span>26 <span style=''>  }
+</span>27 <span style=''>
+</span>28 <span style=''>  implicit class OptionMap[K, V](val map: Map[K, Option[V]]) {
+</span>29 <span style=''>    def sequence: Option[Map[K, V]] =
+</span>30 <span style=''>      if (</span><span style='background: #AEF1AE'>map.exists(_._2.isEmpty)</span><span style=''>) </span><span style='background: #AEF1AE'>None</span><span style=''>
+</span>31 <span style=''>      else </span><span style='background: #AEF1AE'>Some(map.view.mapValues(_.get).toMap)</span><span style=''>
+</span>32 <span style=''>
+</span>33 <span style=''>    def collectDefined: Map[K, V] = </span><span style='background: #AEF1AE'>map.collect { case (key, Some(value)) =&gt; key -&gt; value }</span><span style=''>
+</span>34 <span style=''>  }
+</span>35 <span style=''>
+</span>36 <span style=''>  implicit class OptionString(value: String) {
+</span>37 <span style=''>    def toOption: Option[String] =
+</span>38 <span style=''>      if (</span><span style='background: #AEF1AE'>value.isEmpty</span><span style=''>) </span><span style='background: #AEF1AE'>None</span><span style=''>
+</span>39 <span style=''>      else </span><span style='background: #AEF1AE'>Some(value)</span><span style=''>
+</span>40 <span style=''>  }
+</span>41 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          487
+        </td>
+        <td>
+          309
+          -
+          340
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.find
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          TryIterable.this.coll.iterator.find(((x$1: T[A]) =&gt; x$1.isFailure))
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          486
+        </td>
+        <td>
+          328
+          -
+          339
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.util.Try.isFailure
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          x$1.isFailure
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          489
+        </td>
+        <td>
+          390
+          -
+          408
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](exception)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          488
+        </td>
+        <td>
+          390
+          -
+          408
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Failure.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Failure.apply[Nothing](exception)
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          490
+        </td>
+        <td>
+          447
+          -
+          452
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.util.Try.get
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          x$2.get
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          492
+        </td>
+        <td>
+          430
+          -
+          454
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[CC[A]](TryIterable.this.coll.map[A](((x$2: T[A]) =&gt; x$2.get)))
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          491
+        </td>
+        <td>
+          438
+          -
+          453
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.map
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          TryIterable.this.coll.map[A](((x$2: T[A]) =&gt; x$2.get))
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          493
+        </td>
+        <td>
+          430
+          -
+          454
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.util.Success.apply
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.util.Success.apply[CC[A]](TryIterable.this.coll.map[A](((x$2: T[A]) =&gt; x$2.get)))
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          496
+        </td>
+        <td>
+          751
+          -
+          760
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Option.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          x$3.isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          499
+        </td>
+        <td>
+          763
+          -
+          767
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          498
+        </td>
+        <td>
+          763
+          -
+          767
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          497
+        </td>
+        <td>
+          739
+          -
+          761
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.exists
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionIterable.this.coll.exists(((x$3: O[A]) =&gt; x$3.isEmpty))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          501
+        </td>
+        <td>
+          784
+          -
+          799
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.map
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionIterable.this.coll.map[A](((x$4: O[A]) =&gt; x$4.get))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          503
+        </td>
+        <td>
+          779
+          -
+          800
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[CC[A]](OptionIterable.this.coll.map[A](((x$4: O[A]) =&gt; x$4.get)))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          500
+        </td>
+        <td>
+          793
+          -
+          798
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Option.get
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          x$4.get
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          502
+        </td>
+        <td>
+          779
+          -
+          800
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[CC[A]](OptionIterable.this.coll.map[A](((x$4: O[A]) =&gt; x$4.get)))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          505
+        </td>
+        <td>
+          847
+          -
+          847
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionIterable.$anonfun.&lt;init&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          new $anonfun()
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          504
+        </td>
+        <td>
+          872
+          -
+          877
+        </td>
+        <td>
+          Ident
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionIterable.$anonfun.value
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          value
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          506
+        </td>
+        <td>
+          834
+          -
+          879
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.collect
+        </td>
+        <td>
+          de.zpro.backend.data.requestobjecttest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionIterable.this.coll.collect[A](({
+  @SerialVersionUID(value = 0) final &lt;synthetic&gt; class $anonfun extends scala.runtime.AbstractPartialFunction[O[A],A] with java.io.Serializable {
+    def &lt;init&gt;(): &lt;$anon: O[A] =&gt; A&gt; = {
+      $anonfun.super.&lt;init&gt;();
+      ()
+    };
+    final override def applyOrElse[A1 &lt;: O[A], B1 &gt;: A](x1: A1, default: A1 =&gt; B1): B1 = ((x1.asInstanceOf[O[A]]: O[A]): O[A] @unchecked) match {
+      case (value: A): Some[A]((value @ (_: A))) =&gt; value
+      case (defaultCase$ @ _) =&gt; default.apply(x1)
+    };
+    final def isDefinedAt(x1: O[A]): Boolean = ((x1.asInstanceOf[O[A]]: O[A]): O[A] @unchecked) match {
+      case (value: A): Some[A]((value @ (_: A))) =&gt; true
+      case (defaultCase$ @ _) =&gt; false
+    }
+  };
+  new $anonfun()
+}: PartialFunction[O[A],A]))
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          508
+        </td>
+        <td>
+          996
+          -
+          1020
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.exists
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionMap.this.map.exists(((x$5: (K, Option[V])) =&gt; x$5._2.isEmpty))
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          507
+        </td>
+        <td>
+          1007
+          -
+          1019
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Option.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          x$5._2.isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          510
+        </td>
+        <td>
+          1022
+          -
+          1026
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          509
+        </td>
+        <td>
+          1022
+          -
+          1026
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          514
+        </td>
+        <td>
+          1038
+          -
+          1075
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[scala.collection.immutable.Map[K,V]](OptionMap.this.map.view.mapValues[V](((x$6: Option[V]) =&gt; x$6.get)).toMap[K, V](scala.this.&lt;:&lt;.refl[(K, V)]))
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          513
+        </td>
+        <td>
+          1043
+          -
+          1074
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionMap.this.map.view.mapValues[V](((x$6: Option[V]) =&gt; x$6.get)).toMap[K, V](scala.this.&lt;:&lt;.refl[(K, V)])
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          512
+        </td>
+        <td>
+          1069
+          -
+          1069
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(K, V)]
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          515
+        </td>
+        <td>
+          1038
+          -
+          1075
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[scala.collection.immutable.Map[K,V]](OptionMap.this.map.view.mapValues[V](((x$6: Option[V]) =&gt; x$6.get)).toMap[K, V](scala.this.&lt;:&lt;.refl[(K, V)]))
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          511
+        </td>
+        <td>
+          1062
+          -
+          1067
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Option.get
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          x$6.get
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          517
+        </td>
+        <td>
+          1154
+          -
+          1166
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[K](key).-&gt;[V](value)
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          516
+        </td>
+        <td>
+          1154
+          -
+          1166
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[K](key).-&gt;[V](value)
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          519
+        </td>
+        <td>
+          1113
+          -
+          1168
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapOps.collect
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionMap.this.map.collect[K, V](({
+  @SerialVersionUID(value = 0) final &lt;synthetic&gt; class $anonfun extends scala.runtime.AbstractPartialFunction[(K, Option[V]),(K, V)] with java.io.Serializable {
+    def &lt;init&gt;(): &lt;$anon: ((K, Option[V])) =&gt; (K, V)&gt; = {
+      $anonfun.super.&lt;init&gt;();
+      ()
+    };
+    final override def applyOrElse[A1 &lt;: (K, Option[V]), B1 &gt;: (K, V)](x1: A1, default: A1 =&gt; B1): B1 = ((x1.asInstanceOf[(K, Option[V])]: (K, Option[V])): (K, Option[V]) @unchecked) match {
+      case (_1: K, _2: Option[V]): (K, Option[V])((key @ _), (value: V): Some[V]((value @ _))) =&gt; scala.Predef.ArrowAssoc[K](key).-&gt;[V](value)
+      case (defaultCase$ @ _) =&gt; default.apply(x1)
+    };
+    final def isDefinedAt(x1: (K, Option[V])): Boolean = ((x1.asInstanceOf[(K, Option[V])]: (K, Option[V])): (K, Option[V]) @unchecked) match {
+      case (_1: K, _2: Option[V]): (K, Option[V])((key @ _), (value: V): Some[V]((value @ _))) =&gt; true
+      case (defaultCase$ @ _) =&gt; false
+    }
+  };
+  new $anonfun()
+}: PartialFunction[(K, Option[V]),(K, V)]))
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          518
+        </td>
+        <td>
+          1125
+          -
+          1125
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionMap.$anonfun.&lt;init&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          new $anonfun()
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          522
+        </td>
+        <td>
+          1281
+          -
+          1285
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          521
+        </td>
+        <td>
+          1281
+          -
+          1285
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          520
+        </td>
+        <td>
+          1266
+          -
+          1279
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.String.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionString.this.value.isEmpty()
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          523
+        </td>
+        <td>
+          1302
+          -
+          1307
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionString.value
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          OptionString.this.value
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          525
+        </td>
+        <td>
+          1297
+          -
+          1308
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](OptionString.this.value)
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          524
+        </td>
+        <td>
+          1297
+          -
+          1308
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.util.extensionstest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](OptionString.this.value)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

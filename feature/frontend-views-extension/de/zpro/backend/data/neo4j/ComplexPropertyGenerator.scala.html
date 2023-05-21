@@ -1,0 +1,942 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/neo4j/ComplexPropertyGenerator.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.neo4j
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.RequestObject
+</span>4 <span style=''>
+</span>5 <span style=''>private trait ComplexPropertyGenerator {
+</span>6 <span style=''>  def generateComplex(request: RequestObject): String
+</span>7 <span style=''>
+</span>8 <span style=''>  def filterOutComplex(request: RequestObject): RequestObject
+</span>9 <span style=''>
+</span>10 <span style=''>  val pcFields: List[String] = </span><span style='background: #AEF1AE'>List(&quot;pc&quot;, &quot;pcUnique&quot;, &quot;pcAll&quot;)</span><span style=''>
+</span>11 <span style=''>  val coiFields: List[String] = </span><span style='background: #AEF1AE'>List(&quot;coi&quot;)</span><span style=''>
+</span>12 <span style=''>  val complexFields: List[String] = </span><span style='background: #AEF1AE'>pcFields ++ coiFields</span><span style=''>
+</span>13 <span style=''>}
+</span>14 <span style=''>
+</span>15 <span style=''>private object ComplexPropertyGenerator extends ComplexPropertyGenerator {
+</span>16 <span style=''>
+</span>17 <span style=''>  override def filterOutComplex(request: RequestObject): RequestObject =
+</span>18 <span style=''>    </span><span style='background: #AEF1AE'>request.copy(simpleFields = request.simpleFields.diff(complexFields), children = request.children.map(filterOutComplex))</span><span style=''>
+</span>19 <span style=''>
+</span>20 <span style=''>  override def generateComplex(request: RequestObject): String =
+</span>21 <span style=''>    </span><span style='background: #AEF1AE'>request.all.flatMap(generateNode).mkString(&quot; &quot;)</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>  private def generateNode(property: RequestObject): List[String] =
+</span>24 <span style=''>    </span><span style='background: #AEF1AE'>addPcIfNeeded(property).toList ++ addCoiIfNeeded(property)</span><span style=''>
+</span>25 <span style=''>
+</span>26 <span style=''>  private def addPcIfNeeded(node: RequestObject): Option[String] =
+</span>27 <span style=''>    if (</span><span style='background: #AEF1AE'>node.simpleFields.intersect(pcFields).isEmpty</span><span style=''>) </span><span style='background: #AEF1AE'>None</span><span style=''>
+</span>28 <span style=''>    else </span><span style='background: #AEF1AE'>Some(generatePedigreeCollapse(node.name))</span><span style=''>
+</span>29 <span style=''>
+</span>30 <span style=''>  private def addCoiIfNeeded(node: RequestObject): Option[String] =
+</span>31 <span style=''>    if (</span><span style='background: #AEF1AE'>node.simpleFields.intersect(coiFields).isEmpty</span><span style=''>) </span><span style='background: #AEF1AE'>None</span><span style=''>
+</span>32 <span style=''>    else </span><span style='background: #AEF1AE'>Some(generateCoefficientOfInbreeding(node.name))</span><span style=''>
+</span>33 <span style=''>
+</span>34 <span style=''>  private def generatePedigreeCollapse(nodeName: String, generations: Int = 5): String =
+</span>35 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;CALL {
+</span>36 <span style=''></span><span style='background: #AEF1AE'>       |  WITH $nodeName
+</span>37 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH ($nodeName)-[:BornIn|Mother|Father*..${generations * 2}]-&gt;(ancestor:Dog)
+</span>38 <span style=''></span><span style='background: #AEF1AE'>       |  WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors
+</span>39 <span style=''></span><span style='background: #AEF1AE'>       |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll
+</span>40 <span style=''></span><span style='background: #AEF1AE'>       |  RETURN toFloat(nUnique) / nAll AS ${nodeName}_pc, nUnique AS ${nodeName}_pcUnique, nAll AS ${nodeName}_pcAll
+</span>41 <span style=''></span><span style='background: #AEF1AE'>       |}&quot;&quot;&quot;.stripMargin</span><span style=''>
+</span>42 <span style=''>
+</span>43 <span style=''>  private def generateCoefficientOfInbreeding(nodeName: String, generations: Int = 5): String =
+</span>44 <span style=''>    </span><span style='background: #AEF1AE'>s&quot;&quot;&quot;CALL {
+</span>45 <span style=''></span><span style='background: #AEF1AE'>       |  WITH $nodeName
+</span>46 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH ($nodeName)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)
+</span>47 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
+</span>48 <span style=''></span><span style='background: #AEF1AE'>       |  MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)
+</span>49 <span style=''></span><span style='background: #AEF1AE'>       |  WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths
+</span>50 <span style=''></span><span style='background: #AEF1AE'>       |  WITH [path IN ancestorPaths WHERE NOT
+</span>51 <span style=''></span><span style='background: #AEF1AE'>       |             ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND
+</span>52 <span style=''></span><span style='background: #AEF1AE'>       |                  (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR
+</span>53 <span style=''></span><span style='background: #AEF1AE'>       |                   ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths
+</span>54 <span style=''></span><span style='background: #AEF1AE'>       |  UNWIND ancestorPaths AS dataPoint
+</span>55 <span style=''></span><span style='background: #AEF1AE'>       |  WITH dataPoint.p1 AS p1, dataPoint.p2 as p2
+</span>56 <span style=''></span><span style='background: #AEF1AE'>       |  WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n
+</span>57 <span style=''></span><span style='background: #AEF1AE'>       |  WITH sum(n) AS coi
+</span>58 <span style=''></span><span style='background: #AEF1AE'>       |  RETURN coi AS ${nodeName}_coi
+</span>59 <span style=''></span><span style='background: #AEF1AE'>       |}&quot;&quot;&quot;.stripMargin</span><span style=''>
+</span>60 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          56
+        </td>
+        <td>
+          269
+          -
+          300
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableFactory.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.`package`.List.apply[String](&quot;pc&quot;, &quot;pcUnique&quot;, &quot;pcAll&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          57
+        </td>
+        <td>
+          333
+          -
+          344
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableFactory.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.`package`.List.apply[String](&quot;coi&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          59
+        </td>
+        <td>
+          381
+          -
+          402
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.++
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.pcFields.++[String](ComplexPropertyGenerator.this.coiFields)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          58
+        </td>
+        <td>
+          393
+          -
+          402
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.coiFields
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.coiFields
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          62
+        </td>
+        <td>
+          661
+          -
+          677
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.filterOutComplex
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.filterOutComplex(request)
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          65
+        </td>
+        <td>
+          567
+          -
+          567
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.copy$default$2
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.copy$default$2
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          64
+        </td>
+        <td>
+          567
+          -
+          567
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.copy$default$1
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.copy$default$1
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          67
+        </td>
+        <td>
+          559
+          -
+          679
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.copy
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.copy(x$3, x$4, x$5, x$1, x$2)
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          61
+        </td>
+        <td>
+          587
+          -
+          627
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.StrictOptimizedSeqOps.diff
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.simpleFields.diff[String](ComplexPropertyGenerator.this.complexFields)
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          60
+        </td>
+        <td>
+          613
+          -
+          626
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.complexFields
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.complexFields
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          63
+        </td>
+        <td>
+          640
+          -
+          678
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.children.map[de.zpro.backend.data.RequestObject](((request: de.zpro.backend.data.RequestObject) =&gt; ComplexPropertyGenerator.this.filterOutComplex(request)))
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          66
+        </td>
+        <td>
+          567
+          -
+          567
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.copy$default$3
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.copy$default$3
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          68
+        </td>
+        <td>
+          750
+          -
+          797
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.mkString
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          request.all.flatMap[String](((property: de.zpro.backend.data.RequestObject) =&gt; ComplexPropertyGenerator.this.generateNode(property))).mkString(&quot; &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          70
+        </td>
+        <td>
+          871
+          -
+          929
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.++
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.addPcIfNeeded(property).toList.++[String](ComplexPropertyGenerator.this.addCoiIfNeeded(property))
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          69
+        </td>
+        <td>
+          905
+          -
+          929
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.addCoiIfNeeded
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.addCoiIfNeeded(property)
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          71
+        </td>
+        <td>
+          1034
+          -
+          1042
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.pcFields
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.pcFields
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          74
+        </td>
+        <td>
+          1053
+          -
+          1057
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          73
+        </td>
+        <td>
+          1053
+          -
+          1057
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          72
+        </td>
+        <td>
+          1006
+          -
+          1051
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.immutable.List.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          node.simpleFields.intersect[String](ComplexPropertyGenerator.this.pcFields).isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          77
+        </td>
+        <td>
+          1072
+          -
+          1107
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generatePedigreeCollapse
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2)
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          76
+        </td>
+        <td>
+          1072
+          -
+          1072
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generatePedigreeCollapse$default$2
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          79
+        </td>
+        <td>
+          1067
+          -
+          1108
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2))
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          78
+        </td>
+        <td>
+          1067
+          -
+          1108
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](ComplexPropertyGenerator.this.generatePedigreeCollapse(node.name, ComplexPropertyGenerator.this.generatePedigreeCollapse$default$2))
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          75
+        </td>
+        <td>
+          1097
+          -
+          1106
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.name
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          node.name
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          83
+        </td>
+        <td>
+          1234
+          -
+          1238
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          80
+        </td>
+        <td>
+          1214
+          -
+          1223
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.coiFields
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.coiFields
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          82
+        </td>
+        <td>
+          1234
+          -
+          1238
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.None
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.None
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          81
+        </td>
+        <td>
+          1186
+          -
+          1232
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.immutable.List.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          node.simpleFields.intersect[String](ComplexPropertyGenerator.this.coiFields).isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          86
+        </td>
+        <td>
+          1253
+          -
+          1295
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generateCoefficientOfInbreeding
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.generateCoefficientOfInbreeding(node.name, ComplexPropertyGenerator.this.generateCoefficientOfInbreeding$default$2)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          85
+        </td>
+        <td>
+          1253
+          -
+          1253
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.ComplexPropertyGenerator.generateCoefficientOfInbreeding$default$2
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          ComplexPropertyGenerator.this.generateCoefficientOfInbreeding$default$2
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          88
+        </td>
+        <td>
+          1248
+          -
+          1296
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](ComplexPropertyGenerator.this.generateCoefficientOfInbreeding(node.name, ComplexPropertyGenerator.this.generateCoefficientOfInbreeding$default$2))
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          87
+        </td>
+        <td>
+          1248
+          -
+          1296
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](ComplexPropertyGenerator.this.generateCoefficientOfInbreeding(node.name, ComplexPropertyGenerator.this.generateCoefficientOfInbreeding$default$2))
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          84
+        </td>
+        <td>
+          1285
+          -
+          1294
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.name
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          node.name
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          89
+        </td>
+        <td>
+          1391
+          -
+          1825
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.StringOps.stripMargin
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.augmentString(&quot;CALL {\n       |  WITH &quot;.+(nodeName).+(&quot;\n       |  MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn|Mother|Father*..&quot;).+(generations.*(2)).+(&quot;]-&gt;(ancestor:Dog)\n       |  WITH collect(ancestor) AS ancestors, collect(DISTINCT ancestor) AS uniqueAncestors\n       |  WITH size(uniqueAncestors) AS nUnique, size(ancestors) AS nAll\n       |  RETURN toFloat(nUnique) / nAll AS &quot;).+(nodeName).+(&quot;_pc, nUnique AS &quot;).+(nodeName).+(&quot;_pcUnique, nAll AS &quot;).+(nodeName).+(&quot;_pcAll\n       |}&quot;)).stripMargin
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          90
+        </td>
+        <td>
+          1927
+          -
+          2868
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.StringOps.stripMargin
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.complexpropertygeneratortest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.augmentString(&quot;CALL {\n       |  WITH &quot;.+(nodeName).+(&quot;\n       |  MATCH (&quot;).+(nodeName).+(&quot;)-[:BornIn]-&gt;(litter:Litter)-[:Mother]-&gt;(mother:Dog) MATCH (litter)-[:Father]-&gt;(father:Dog)\n       |  MATCH (mother)-[p1:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |  MATCH (father)-[p2:BornIn|Mother|Father*..10]-&gt;(common_ancestor:Dog)\n       |  WITH DISTINCT collect({p1: p1, p2: p2}) AS ancestorPaths\n       |  WITH [path IN ancestorPaths WHERE NOT\n       |             ANY(otherPath IN ancestorPaths WHERE otherPath &lt;&gt; path AND\n       |                  (ALL(relation IN otherPath.p1 WHERE relation IN path.p1) OR\n       |                   ALL(relation IN otherPath.p2 WHERE relation IN path.p2)))] AS ancestorPaths\n       |  UNWIND ancestorPaths AS dataPoint\n       |  WITH dataPoint.p1 AS p1, dataPoint.p2 as p2\n       |  WITH 0.5^((size(p1) + size(p2))/2 + 1) AS n\n       |  WITH sum(n) AS coi\n       |  RETURN coi AS &quot;).+(nodeName).+(&quot;_coi\n       |}&quot;)).stripMargin
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

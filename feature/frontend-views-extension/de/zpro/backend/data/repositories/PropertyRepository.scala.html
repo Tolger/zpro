@@ -1,0 +1,2713 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/repositories/PropertyRepository.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.repositories
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.{DatabaseRequester, DbResult, RequestObject}
+</span>4 <span style=''>import de.zpro.backend.exceptions.UnknownPropertyTypeException
+</span>5 <span style=''>import de.zpro.backend.util.Extensions.OptionIterable
+</span>6 <span style=''>import org.neo4j.driver.Value
+</span>7 <span style=''>import org.neo4j.driver.internal.value.StringValue
+</span>8 <span style=''>import sangria.schema.{BooleanType, EnumType, EnumValue, LongType, OutputType, StringType}
+</span>9 <span style=''>
+</span>10 <span style=''>import scala.collection.immutable.HashSet
+</span>11 <span style=''>import scala.concurrent.{ExecutionContext, Future}
+</span>12 <span style=''>
+</span>13 <span style=''>private object PropertyRepository {
+</span>14 <span style=''>  val propertyRequest: RequestObject = </span><span style='background: #AEF1AE'>RequestObject.simple(
+</span>15 <span style=''></span><span style='background: #AEF1AE'>    dataType = &quot;Property&quot;,
+</span>16 <span style=''></span><span style='background: #AEF1AE'>    fields = List(&quot;type&quot;, &quot;name&quot;, &quot;shortDisplayName&quot;, &quot;displayName&quot;, &quot;description&quot;, &quot;section&quot;, &quot;options&quot;)
+</span>17 <span style=''></span><span style='background: #AEF1AE'>  )</span><span style=''>
+</span>18 <span style=''>}
+</span>19 <span style=''>
+</span>20 <span style=''>case class PropertyRepository(storage: DatabaseRequester)(implicit private val context: ExecutionContext) {
+</span>21 <span style=''>  def loadPropertiesForSchema: Future[List[GraphqlProperty[Any, OutputType[Any]]]] =
+</span>22 <span style=''>    </span><span style='background: #AEF1AE'>loadProperties.map(_.map[Option[GraphqlProperty[Any, OutputType[Any]]]](property =&gt; property.valueType match {
+</span>23 <span style=''></span><span style='background: #AEF1AE'>      case &quot;String&quot; =&gt; Some(GraphqlProperty(property.name, StringType, _.asString))
+</span>24 <span style=''></span><span style='background: #AEF1AE'>      case &quot;Long&quot; | &quot;Date&quot; =&gt; Some(GraphqlProperty(property.name, LongType, _.asLong))
+</span>25 <span style=''></span><span style='background: #AEF1AE'>      case &quot;Boolean&quot; | &quot;Boolean-Tested&quot; =&gt; Some(GraphqlProperty(property.name, BooleanType, _.asBoolean))
+</span>26 <span style=''></span><span style='background: #AEF1AE'>      case &quot;Enum-Unordered-Int&quot; | &quot;Enum-Ordered-Int&quot; =&gt; Some(GraphqlProperty(
+</span>27 <span style=''></span><span style='background: #AEF1AE'>        name = property.name,
+</span>28 <span style=''></span><span style='background: #AEF1AE'>        valueType = EnumType(property.name, Some(property.description), property.options.get.map(s =&gt; EnumValue(name = s&quot;_$s&quot;, value = s.toInt))),
+</span>29 <span style=''></span><span style='background: #AEF1AE'>        resolve = _.asInt))
+</span>30 <span style=''></span><span style='background: #AEF1AE'>      case &quot;Enum-Unordered-String&quot; | &quot;Enum-Ordered-String&quot; =&gt; Some(GraphqlProperty(
+</span>31 <span style=''></span><span style='background: #AEF1AE'>        name = property.name,
+</span>32 <span style=''></span><span style='background: #AEF1AE'>        valueType = EnumType(property.name, Some(property.description), property.options.get.map(s =&gt; EnumValue(name = s, value = s))),
+</span>33 <span style=''></span><span style='background: #AEF1AE'>        resolve = _.asString))
+</span>34 <span style=''></span><span style='background: #AEF1AE'>    }).collectDefined)</span><span style=''>
+</span>35 <span style=''>
+</span>36 <span style=''>  def loadProperties: Future[List[Property]] =
+</span>37 <span style=''>    </span><span style='background: #AEF1AE'>getProperties.map(_
+</span>38 <span style=''></span><span style='background: #AEF1AE'>      .map(parseProperty)
+</span>39 <span style=''></span><span style='background: #AEF1AE'>      .filter(checkValidityAndPrintErrors)
+</span>40 <span style=''></span><span style='background: #AEF1AE'>    )</span><span style=''>
+</span>41 <span style=''>
+</span>42 <span style=''>  private def getProperties: Future[List[DbResult]] = {
+</span>43 <span style=''>    </span><span style='background: #AEF1AE'>storage.getNodes(PropertyRepository.propertyRequest)</span><span style=''>
+</span>44 <span style=''>  }
+</span>45 <span style=''>
+</span>46 <span style=''>  private def parseProperty(data: DbResult): Property = </span><span style='background: #AEF1AE'>Property(
+</span>47 <span style=''></span><span style='background: #AEF1AE'>    name = data(&quot;name&quot;).asString,
+</span>48 <span style=''></span><span style='background: #AEF1AE'>    valueType = data(&quot;type&quot;).asString,
+</span>49 <span style=''></span><span style='background: #AEF1AE'>    shortDisplayName = data(&quot;shortDisplayName&quot;).asString,
+</span>50 <span style=''></span><span style='background: #AEF1AE'>    displayName = data(&quot;displayName&quot;).asString,
+</span>51 <span style=''></span><span style='background: #AEF1AE'>    description = data(&quot;description&quot;).asString,
+</span>52 <span style=''></span><span style='background: #AEF1AE'>    section = data(&quot;section&quot;).asString,
+</span>53 <span style=''></span><span style='background: #AEF1AE'>    options = data.getListOption(&quot;options&quot;).map(_.map {
+</span>54 <span style=''></span><span style='background: #AEF1AE'>      case s: StringValue =&gt; s.asString
+</span>55 <span style=''></span><span style='background: #AEF1AE'>      case v: Value =&gt; v.toString
+</span>56 <span style=''></span><span style='background: #AEF1AE'>    })
+</span>57 <span style=''></span><span style='background: #AEF1AE'>  )</span><span style=''>
+</span>58 <span style=''>
+</span>59 <span style=''>  private val validTypes = </span><span style='background: #AEF1AE'>HashSet(&quot;String&quot;, &quot;Long&quot;, &quot;Date&quot;, &quot;Boolean&quot;, &quot;Boolean-Tested&quot;,
+</span>60 <span style=''></span><span style='background: #AEF1AE'>    &quot;Enum-Unordered-Int&quot;, &quot;Enum-Ordered-Int&quot;, &quot;Enum-Unordered-String&quot;, &quot;Enum-Ordered-String&quot;)</span><span style=''>
+</span>61 <span style=''>
+</span>62 <span style=''>  private def checkValidityAndPrintErrors(property: Property): Boolean = {
+</span>63 <span style=''>    if (</span><span style='background: #AEF1AE'>validTypes.contains(property.valueType)</span><span style=''>)
+</span>64 <span style=''>      </span><span style='background: #AEF1AE'>return true</span><span style=''>
+</span>65 <span style=''>    </span><span style='background: #AEF1AE'>UnknownPropertyTypeException(s&quot;Can't load property of unknown type \&quot;${property.valueType}\&quot;&quot;).printStackTrace()</span><span style=''>
+</span>66 <span style=''>    </span><span style='background: #AEF1AE'>false</span><span style=''>
+</span>67 <span style=''>  }
+</span>68 <span style=''>}
+</span>69 <span style=''>
+</span>70 <span style=''>case class Property(name: String, valueType: String, shortDisplayName: String, displayName: String, description: String, section: String, options: Option[List[String]]) {
+</span>71 <span style=''>  lazy val transformer: Option[PropertyTransformer] = valueType match {
+</span>72 <span style=''>    case &quot;Enum-Ordered-String&quot; =&gt; Some(OrderedStringPropertyTransformer(name, options.get))
+</span>73 <span style=''>    case _ =&gt; None
+</span>74 <span style=''>  }
+</span>75 <span style=''>}
+</span>76 <span style=''>
+</span>77 <span style=''>trait PropertyTransformer {
+</span>78 <span style=''>  val name: String
+</span>79 <span style=''>
+</span>80 <span style=''>  def processDog(toProcess: Map[String, Value]): Map[String, Value] = </span><span style='background: #AEF1AE'>toProcess.get(name)</span><span style=''> match {
+</span>81 <span style=''>    case Some(toTransform) =&gt; </span><span style='background: #AEF1AE'>toProcess + (name -&gt; transform(toTransform))</span><span style=''>
+</span>82 <span style=''>    case None =&gt; </span><span style='background: #AEF1AE'>toProcess</span><span style=''>
+</span>83 <span style=''>  }
+</span>84 <span style=''>
+</span>85 <span style=''>  def transform(value: Value): Value
+</span>86 <span style=''>}
+</span>87 <span style=''>
+</span>88 <span style=''>case class OrderedStringPropertyTransformer(name: String, options: List[String]) extends PropertyTransformer {
+</span>89 <span style=''>  override def transform(value: Value): Value = </span><span style='background: #AEF1AE'>new StringValue(options(value.asInt))</span><span style=''>
+</span>90 <span style=''>}
+</span>91 <span style=''>
+</span>92 <span style=''>case class GraphqlProperty[U, T &lt;: OutputType[U]](name: String, valueType: T, resolve: Value =&gt; U)
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          343
+        </td>
+        <td>
+          575
+          -
+          733
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.simple
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.RequestObject.simple(&quot;Property&quot;, scala.`package`.List.apply[String](&quot;type&quot;, &quot;name&quot;, &quot;shortDisplayName&quot;, &quot;displayName&quot;, &quot;description&quot;, &quot;section&quot;, &quot;options&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          341
+        </td>
+        <td>
+          612
+          -
+          622
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;Property&quot;
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          342
+        </td>
+        <td>
+          637
+          -
+          729
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableFactory.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.`package`.List.apply[String](&quot;type&quot;, &quot;name&quot;, &quot;shortDisplayName&quot;, &quot;displayName&quot;, &quot;description&quot;, &quot;section&quot;, &quot;options&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          400
+        </td>
+        <td>
+          934
+          -
+          1908
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.loadProperties.map[List[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]]](((x$1: List[de.zpro.backend.data.repositories.Property]) =&gt; de.zpro.backend.util.Extensions.OptionIterable[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]], List, Option](x$1.map[Option[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]]](((property: de.zpro.backend.data.repositories.Property) =&gt; property.valueType match {
+  case &quot;String&quot; =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString())))
+  case (&quot;Long&quot;| &quot;Date&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong())))
+  case (&quot;Boolean&quot;| &quot;Boolean-Tested&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean())))
+  case (&quot;Enum-Unordered-Int&quot;| &quot;Enum-Ordered-Int&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+    &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+    &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt())))
+  case (&quot;Enum-Unordered-String&quot;| &quot;Enum-Ordered-String&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$7: String = s;
+    &lt;artifact&gt; val x$8: String = s;
+    &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString())))
+}))).collectDefined))(PropertyRepository.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          397
+        </td>
+        <td>
+          953
+          -
+          1892
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$1.map[Option[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]]](((property: de.zpro.backend.data.repositories.Property) =&gt; property.valueType match {
+  case &quot;String&quot; =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString())))
+  case (&quot;Long&quot;| &quot;Date&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong())))
+  case (&quot;Boolean&quot;| &quot;Boolean-Tested&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean())))
+  case (&quot;Enum-Unordered-Int&quot;| &quot;Enum-Ordered-Int&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+    &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+    &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt())))
+  case (&quot;Enum-Unordered-String&quot;| &quot;Enum-Ordered-String&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$7: String = s;
+    &lt;artifact&gt; val x$8: String = s;
+    &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString())))
+}))
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          399
+        </td>
+        <td>
+          952
+          -
+          952
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.context
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.context
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          346
+        </td>
+        <td>
+          1116
+          -
+          1126
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$2.asString()
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          349
+        </td>
+        <td>
+          1068
+          -
+          1128
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString())))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          345
+        </td>
+        <td>
+          1104
+          -
+          1114
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.StringType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.`package`.StringType
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          348
+        </td>
+        <td>
+          1068
+          -
+          1128
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString())))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          344
+        </td>
+        <td>
+          1089
+          -
+          1102
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          347
+        </td>
+        <td>
+          1073
+          -
+          1127
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.GraphqlProperty.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString()))
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          355
+        </td>
+        <td>
+          1159
+          -
+          1215
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong())))
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          352
+        </td>
+        <td>
+          1205
+          -
+          1213
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asLong
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$3.asLong()
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          354
+        </td>
+        <td>
+          1159
+          -
+          1215
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong())))
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          351
+        </td>
+        <td>
+          1195
+          -
+          1203
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.LongType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.`package`.LongType
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          350
+        </td>
+        <td>
+          1180
+          -
+          1193
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          353
+        </td>
+        <td>
+          1164
+          -
+          1214
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.GraphqlProperty.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong()))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          358
+        </td>
+        <td>
+          1308
+          -
+          1319
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asBoolean
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$4.asBoolean()
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          361
+        </td>
+        <td>
+          1259
+          -
+          1321
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean())))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          360
+        </td>
+        <td>
+          1259
+          -
+          1321
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean())))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          357
+        </td>
+        <td>
+          1295
+          -
+          1306
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          sangria.schema.BooleanType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.`package`.BooleanType
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          359
+        </td>
+        <td>
+          1264
+          -
+          1320
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.GraphqlProperty.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean()))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          356
+        </td>
+        <td>
+          1280
+          -
+          1293
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          379
+        </td>
+        <td>
+          1378
+          -
+          1604
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+  &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+  &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt())))
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          378
+        </td>
+        <td>
+          1378
+          -
+          1604
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+  &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+  &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt())))
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          377
+        </td>
+        <td>
+          1383
+          -
+          1603
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.GraphqlProperty.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+  &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+  &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt()))
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          362
+        </td>
+        <td>
+          1415
+          -
+          1428
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          364
+        </td>
+        <td>
+          1479
+          -
+          1499
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.description
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.description
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          373
+        </td>
+        <td>
+          1450
+          -
+          1450
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply$default$4
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply$default$4[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          367
+        </td>
+        <td>
+          1532
+          -
+          1532
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$2
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$2[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          370
+        </td>
+        <td>
+          1532
+          -
+          1532
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$6
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$6[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          369
+        </td>
+        <td>
+          1532
+          -
+          1532
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$5
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$5[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          372
+        </td>
+        <td>
+          1502
+          -
+          1574
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+  &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+  &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          363
+        </td>
+        <td>
+          1459
+          -
+          1472
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          375
+        </td>
+        <td>
+          1450
+          -
+          1575
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+  &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+  &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing])
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          366
+        </td>
+        <td>
+          1565
+          -
+          1572
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.StringOps.toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.augmentString(s).toInt
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          368
+        </td>
+        <td>
+          1532
+          -
+          1532
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$4
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$4[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          371
+        </td>
+        <td>
+          1532
+          -
+          1573
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          374
+        </td>
+        <td>
+          1450
+          -
+          1450
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply$default$5
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply$default$5[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          365
+        </td>
+        <td>
+          1474
+          -
+          1500
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](property.description)
+        </td>
+      </tr><tr>
+        <td>
+          29
+        </td>
+        <td>
+          376
+        </td>
+        <td>
+          1595
+          -
+          1602
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asInt
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$5.asInt()
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          394
+        </td>
+        <td>
+          1672
+          -
+          1884
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.GraphqlProperty.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$7: String = s;
+  &lt;artifact&gt; val x$8: String = s;
+  &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString()))
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          396
+        </td>
+        <td>
+          1667
+          -
+          1885
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$7: String = s;
+  &lt;artifact&gt; val x$8: String = s;
+  &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString())))
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          395
+        </td>
+        <td>
+          1667
+          -
+          1885
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$7: String = s;
+  &lt;artifact&gt; val x$8: String = s;
+  &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString())))
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          380
+        </td>
+        <td>
+          1704
+          -
+          1717
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          391
+        </td>
+        <td>
+          1739
+          -
+          1739
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply$default$5
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply$default$5[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          382
+        </td>
+        <td>
+          1768
+          -
+          1788
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.description
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.description
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          385
+        </td>
+        <td>
+          1821
+          -
+          1821
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$4
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$4[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          388
+        </td>
+        <td>
+          1821
+          -
+          1851
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          387
+        </td>
+        <td>
+          1821
+          -
+          1821
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$6
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$6[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          381
+        </td>
+        <td>
+          1748
+          -
+          1761
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.name
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          390
+        </td>
+        <td>
+          1739
+          -
+          1739
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply$default$4
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply$default$4[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          384
+        </td>
+        <td>
+          1821
+          -
+          1821
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$2
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$2[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          383
+        </td>
+        <td>
+          1763
+          -
+          1789
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Some.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Some.apply[String](property.description)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          392
+        </td>
+        <td>
+          1739
+          -
+          1853
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          sangria.schema.EnumType.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$7: String = s;
+  &lt;artifact&gt; val x$8: String = s;
+  &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+})), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing])
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          386
+        </td>
+        <td>
+          1821
+          -
+          1821
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          sangria.schema.EnumValue.apply$default$5
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sangria.schema.EnumValue.apply$default$5[Nothing]
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          389
+        </td>
+        <td>
+          1791
+          -
+          1852
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+  &lt;artifact&gt; val x$7: String = s;
+  &lt;artifact&gt; val x$8: String = s;
+  &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+  &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+  &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+  &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+  sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          393
+        </td>
+        <td>
+          1873
+          -
+          1883
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          x$6.asString()
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          398
+        </td>
+        <td>
+          953
+          -
+          1907
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionIterable.collectDefined
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.util.Extensions.OptionIterable[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]], List, Option](x$1.map[Option[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]]](((property: de.zpro.backend.data.repositories.Property) =&gt; property.valueType match {
+  case &quot;String&quot; =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.StringType, ((x$2: org.neo4j.driver.Value) =&gt; x$2.asString())))
+  case (&quot;Long&quot;| &quot;Date&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.LongType, ((x$3: org.neo4j.driver.Value) =&gt; x$3.asLong())))
+  case (&quot;Boolean&quot;| &quot;Boolean-Tested&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.`package`.BooleanType, ((x$4: org.neo4j.driver.Value) =&gt; x$4.asBoolean())))
+  case (&quot;Enum-Unordered-Int&quot;| &quot;Enum-Ordered-Int&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[Int](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[Int]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$1: String = &quot;_&quot;.+(s);
+    &lt;artifact&gt; val x$2: Int = scala.Predef.augmentString(s).toInt;
+    &lt;artifact&gt; val x$3: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$4: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$5: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$6: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[Int](x$1, x$3, x$2, x$4, x$5, x$6)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$5: org.neo4j.driver.Value) =&gt; x$5.asInt())))
+  case (&quot;Enum-Unordered-String&quot;| &quot;Enum-Ordered-String&quot;) =&gt; scala.Some.apply[de.zpro.backend.data.repositories.GraphqlProperty[Any,sangria.schema.OutputType[Any]]](GraphqlProperty.apply[Any, sangria.schema.OutputType[Any]](property.name, sangria.schema.EnumType.apply[String](property.name, scala.Some.apply[String](property.description), property.options.get.map[sangria.schema.EnumValue[String]](((s: String) =&gt; {
+    &lt;artifact&gt; val x$7: String = s;
+    &lt;artifact&gt; val x$8: String = s;
+    &lt;artifact&gt; val x$9: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$2[Nothing];
+    &lt;artifact&gt; val x$10: Option[String] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$4[Nothing];
+    &lt;artifact&gt; val x$11: Vector[sangria.ast.Directive] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$5[Nothing];
+    &lt;artifact&gt; val x$12: Vector[sangria.ast.AstNode] @scala.reflect.internal.annotations.uncheckedBounds = sangria.schema.EnumValue.apply$default$6[Nothing];
+    sangria.schema.EnumValue.apply[String](x$7, x$9, x$8, x$10, x$11, x$12)
+  })), sangria.schema.EnumType.apply$default$4[Nothing], sangria.schema.EnumType.apply$default$5[Nothing]), ((x$6: org.neo4j.driver.Value) =&gt; x$6.asString())))
+}))).collectDefined
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          405
+        </td>
+        <td>
+          1961
+          -
+          2055
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.getProperties.map[List[de.zpro.backend.data.repositories.Property]](((x$7: List[de.zpro.backend.data.DbResult]) =&gt; x$7.map[de.zpro.backend.data.repositories.Property](((data: de.zpro.backend.data.DbResult) =&gt; PropertyRepository.this.parseProperty(data))).filter(((property: de.zpro.backend.data.repositories.Property) =&gt; PropertyRepository.this.checkValidityAndPrintErrors(property)))))(PropertyRepository.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          404
+        </td>
+        <td>
+          1978
+          -
+          1978
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.context
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.context
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          401
+        </td>
+        <td>
+          1992
+          -
+          2005
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.parseProperty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.parseProperty(data)
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          403
+        </td>
+        <td>
+          1979
+          -
+          2049
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$7.map[de.zpro.backend.data.repositories.Property](((data: de.zpro.backend.data.DbResult) =&gt; PropertyRepository.this.parseProperty(data))).filter(((property: de.zpro.backend.data.repositories.Property) =&gt; PropertyRepository.this.checkValidityAndPrintErrors(property)))
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          402
+        </td>
+        <td>
+          2021
+          -
+          2048
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.checkValidityAndPrintErrors
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.checkValidityAndPrintErrors(property)
+        </td>
+      </tr><tr>
+        <td>
+          43
+        </td>
+        <td>
+          406
+        </td>
+        <td>
+          2134
+          -
+          2168
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.propertyRequest
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.propertyRequest
+        </td>
+      </tr><tr>
+        <td>
+          43
+        </td>
+        <td>
+          407
+        </td>
+        <td>
+          2117
+          -
+          2169
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DatabaseRequester.getNodes
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.storage.getNodes(PropertyRepository.propertyRequest)
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          421
+        </td>
+        <td>
+          2231
+          -
+          2648
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          Property.apply(data.apply(&quot;name&quot;).asString(), data.apply(&quot;type&quot;).asString(), data.apply(&quot;shortDisplayName&quot;).asString(), data.apply(&quot;displayName&quot;).asString(), data.apply(&quot;description&quot;).asString(), data.apply(&quot;section&quot;).asString(), data.getListOption(&quot;options&quot;).map[List[String]](((x$8: List[org.neo4j.driver.Value]) =&gt; x$8.map[String](((x0$1: org.neo4j.driver.Value) =&gt; x0$1 match {
+  case (s @ (_: org.neo4j.driver.internal.value.StringValue)) =&gt; s.asString()
+  case (v @ (_: org.neo4j.driver.Value)) =&gt; v.toString()
+})))))
+        </td>
+      </tr><tr>
+        <td>
+          47
+        </td>
+        <td>
+          408
+        </td>
+        <td>
+          2252
+          -
+          2273
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;name&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          48
+        </td>
+        <td>
+          409
+        </td>
+        <td>
+          2291
+          -
+          2312
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;type&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          410
+        </td>
+        <td>
+          2337
+          -
+          2370
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;shortDisplayName&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          411
+        </td>
+        <td>
+          2390
+          -
+          2418
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;displayName&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          412
+        </td>
+        <td>
+          2438
+          -
+          2466
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;description&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          413
+        </td>
+        <td>
+          2482
+          -
+          2506
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.apply(&quot;section&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          420
+        </td>
+        <td>
+          2522
+          -
+          2644
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Option.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.getListOption(&quot;options&quot;).map[List[String]](((x$8: List[org.neo4j.driver.Value]) =&gt; x$8.map[String](((x0$1: org.neo4j.driver.Value) =&gt; x0$1 match {
+  case (s @ (_: org.neo4j.driver.internal.value.StringValue)) =&gt; s.asString()
+  case (v @ (_: org.neo4j.driver.Value)) =&gt; v.toString()
+}))))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          414
+        </td>
+        <td>
+          2541
+          -
+          2550
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;options&quot;
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          419
+        </td>
+        <td>
+          2556
+          -
+          2643
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$8.map[String](((x0$1: org.neo4j.driver.Value) =&gt; x0$1 match {
+  case (s @ (_: org.neo4j.driver.internal.value.StringValue)) =&gt; s.asString()
+  case (v @ (_: org.neo4j.driver.Value)) =&gt; v.toString()
+}))
+        </td>
+      </tr><tr>
+        <td>
+          54
+        </td>
+        <td>
+          415
+        </td>
+        <td>
+          2593
+          -
+          2603
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.internal.value.StringValue.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s.asString()
+        </td>
+      </tr><tr>
+        <td>
+          54
+        </td>
+        <td>
+          416
+        </td>
+        <td>
+          2593
+          -
+          2603
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          org.neo4j.driver.internal.value.StringValue.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s.asString()
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          418
+        </td>
+        <td>
+          2627
+          -
+          2637
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          java.lang.Object.toString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          v.toString()
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          417
+        </td>
+        <td>
+          2627
+          -
+          2637
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.Object.toString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          v.toString()
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          422
+        </td>
+        <td>
+          2677
+          -
+          2833
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableFactory.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.repositoryprovidertest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.collection.immutable.HashSet.apply[String](&quot;String&quot;, &quot;Long&quot;, &quot;Date&quot;, &quot;Boolean&quot;, &quot;Boolean-Tested&quot;, &quot;Enum-Unordered-Int&quot;, &quot;Enum-Ordered-Int&quot;, &quot;Enum-Unordered-String&quot;, &quot;Enum-Ordered-String&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          424
+        </td>
+        <td>
+          2918
+          -
+          2957
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.HashSet.contains
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyRepository.this.validTypes.contains(property.valueType)
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          427
+        </td>
+        <td>
+          2914
+          -
+          2914
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ()
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          423
+        </td>
+        <td>
+          2938
+          -
+          2956
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.Property.valueType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          property.valueType
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          428
+        </td>
+        <td>
+          2914
+          -
+          2914
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ()
+        </td>
+      </tr><tr>
+        <td>
+          64
+        </td>
+        <td>
+          426
+        </td>
+        <td>
+          2965
+          -
+          2976
+        </td>
+        <td>
+          Return
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyRepository.checkValidityAndPrintErrors
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          return true
+        </td>
+      </tr><tr>
+        <td>
+          64
+        </td>
+        <td>
+          425
+        </td>
+        <td>
+          2972
+          -
+          2976
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          true
+        </td>
+      </tr><tr>
+        <td>
+          65
+        </td>
+        <td>
+          429
+        </td>
+        <td>
+          2981
+          -
+          3093
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.Throwable.printStackTrace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.exceptions.UnknownPropertyTypeException.apply(&quot;Can\'t load property of unknown type \&quot;&quot;.+(property.valueType).+(&quot;\&quot;&quot;)).printStackTrace()
+        </td>
+      </tr><tr>
+        <td>
+          66
+        </td>
+        <td>
+          430
+        </td>
+        <td>
+          3098
+          -
+          3103
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          false
+        </td>
+      </tr><tr>
+        <td>
+          80
+        </td>
+        <td>
+          432
+        </td>
+        <td>
+          3590
+          -
+          3609
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapOps.get
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          toProcess.get(PropertyTransformer.this.name)
+        </td>
+      </tr><tr>
+        <td>
+          80
+        </td>
+        <td>
+          431
+        </td>
+        <td>
+          3604
+          -
+          3608
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyTransformer.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyTransformer.this.name
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          433
+        </td>
+        <td>
+          3661
+          -
+          3665
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyTransformer.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyTransformer.this.name
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          436
+        </td>
+        <td>
+          3648
+          -
+          3692
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.MapOps.+
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          toProcess.+[org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](PropertyTransformer.this.name).-&gt;[org.neo4j.driver.Value](PropertyTransformer.this.transform(toTransform)))
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          435
+        </td>
+        <td>
+          3661
+          -
+          3691
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](PropertyTransformer.this.name).-&gt;[org.neo4j.driver.Value](PropertyTransformer.this.transform(toTransform))
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          437
+        </td>
+        <td>
+          3648
+          -
+          3692
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.collection.immutable.MapOps.+
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          toProcess.+[org.neo4j.driver.Value](scala.Predef.ArrowAssoc[String](PropertyTransformer.this.name).-&gt;[org.neo4j.driver.Value](PropertyTransformer.this.transform(toTransform)))
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          434
+        </td>
+        <td>
+          3669
+          -
+          3691
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyTransformer.transform
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          PropertyTransformer.this.transform(toTransform)
+        </td>
+      </tr><tr>
+        <td>
+          82
+        </td>
+        <td>
+          438
+        </td>
+        <td>
+          3710
+          -
+          3719
+        </td>
+        <td>
+          Ident
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.PropertyTransformer.toProcess
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          toProcess
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          439
+        </td>
+        <td>
+          3948
+          -
+          3959
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asInt
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          value.asInt()
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          441
+        </td>
+        <td>
+          3924
+          -
+          3961
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.internal.value.StringValue.&lt;init&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          new org.neo4j.driver.internal.value.StringValue(OrderedStringPropertyTransformer.this.options.apply(value.asInt()))
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          440
+        </td>
+        <td>
+          3940
+          -
+          3960
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.LinearSeqOps.apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.propertyrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          OrderedStringPropertyTransformer.this.options.apply(value.asInt())
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

@@ -1,0 +1,1676 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/neo4j/RecordParser.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.neo4j
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.{DbResult, RequestObject}
+</span>4 <span style=''>import de.zpro.backend.util.Extensions.{OptionIterable, OptionMap}
+</span>5 <span style=''>import org.neo4j.driver.internal.value.{ListValue, MapValue, NullValue}
+</span>6 <span style=''>import org.neo4j.driver.{Value, Record =&gt; Neo4jRecord}
+</span>7 <span style=''>
+</span>8 <span style=''>import scala.collection.mutable
+</span>9 <span style=''>import scala.jdk.CollectionConverters.{ListHasAsScala, MapHasAsScala}
+</span>10 <span style=''>
+</span>11 <span style=''>private trait RecordParser {
+</span>12 <span style=''>  def parseResult(result: List[Neo4jRecord], details: RequestObject): List[DbResult]
+</span>13 <span style=''>}
+</span>14 <span style=''>
+</span>15 <span style=''>private object RecordParser extends RecordParser { // TODO throw errors for unexpected db entries
+</span>16 <span style=''>  override def parseResult(result: List[Neo4jRecord], details: RequestObject): List[DbResult] =
+</span>17 <span style=''>    </span><span style='background: #AEF1AE'>result.map(record =&gt; {
+</span>18 <span style=''></span><span style='background: #AEF1AE'>      val fields = record.fields().asScala.map(e =&gt; e.key() -&gt; e.value()).toMap
+</span>19 <span style=''></span><span style='background: #AEF1AE'>        .filterNot(_._2.isNull)
+</span>20 <span style=''></span><span style='background: #AEF1AE'>      processRoot(details, fields)
+</span>21 <span style=''></span><span style='background: #AEF1AE'>    }).collectDefined</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>  private def processRoot(root: RequestObject, fields: Map[String, Value]): Option[DbResult] = {
+</span>24 <span style=''>    </span><span style='background: #AEF1AE'>fields.get(root.name).map(rootField =&gt; processNode(root, valueToNodeMap(rootField)))</span><span style=''>
+</span>25 <span style=''>  }
+</span>26 <span style=''>
+</span>27 <span style=''>  private def processNode(node: RequestObject, fields: Map[String, Value]): DbResult = {
+</span>28 <span style=''>    val (properties, listProperties, childNodes) = separateFields(fields)
+</span>29 <span style=''>    </span><span style='background: #AEF1AE'>DbResult(
+</span>30 <span style=''></span><span style='background: #AEF1AE'>      dataType = node.dataType,
+</span>31 <span style=''></span><span style='background: #AEF1AE'>      properties = properties.filter { case (key, _) =&gt; node.containsSimpleField(key) },
+</span>32 <span style=''></span><span style='background: #AEF1AE'>      listProperties = listProperties.filter { case (key, _) =&gt; node.containsSimpleField(key) },
+</span>33 <span style=''></span><span style='background: #AEF1AE'>      nodes = processChildNodes(node, childNodes)
+</span>34 <span style=''></span><span style='background: #AEF1AE'>    )</span><span style=''>
+</span>35 <span style=''>  }
+</span>36 <span style=''>
+</span>37 <span style=''>  private def processChildNodes(parent: RequestObject, childFields: Map[String, List[Map[String, Value]]]): Map[String, List[DbResult]] =
+</span>38 <span style=''>    </span><span style='background: #AEF1AE'>childFields
+</span>39 <span style=''></span><span style='background: #AEF1AE'>      .map { case (fieldName, childNodes) =&gt; fieldName -&gt;
+</span>40 <span style=''></span><span style='background: #AEF1AE'>        parent.getChild(fieldName).map(childDetails =&gt;
+</span>41 <span style=''></span><span style='background: #AEF1AE'>          childNodes.map(node =&gt; processNode(childDetails, node)))
+</span>42 <span style=''></span><span style='background: #AEF1AE'>      }.collectDefined</span><span style=''>
+</span>43 <span style=''>
+</span>44 <span style=''>  private def separateFields(fields: Map[String, Value]): (Map[String, Value], Map[String, List[Value]], Map[String, List[Map[String, Value]]]) = {
+</span>45 <span style=''>    val simpleFields = </span><span style='background: #AEF1AE'>mutable.Map[String, Value]()</span><span style=''>
+</span>46 <span style=''>    val listFields = </span><span style='background: #AEF1AE'>mutable.Map[String, List[Value]]()</span><span style=''>
+</span>47 <span style=''>    val nodeFields = </span><span style='background: #AEF1AE'>mutable.Map[String, List[Map[String, Value]]]()</span><span style=''>
+</span>48 <span style=''>    </span><span style='background: #AEF1AE'>fields.foreach {
+</span>49 <span style=''></span><span style='background: #AEF1AE'>      case (name, listValue: ListValue) =&gt;
+</span>50 <span style=''></span><span style='background: #AEF1AE'>        val list = listValue.asList[Value](v =&gt; v).asScala.toList
+</span>51 <span style=''></span><span style='background: #AEF1AE'>        list.headOption match {
+</span>52 <span style=''></span><span style='background: #AEF1AE'>          case Some(_: MapValue) =&gt; nodeFields += name -&gt; list.map(valueToNodeMap)
+</span>53 <span style=''></span><span style='background: #AEF1AE'>          case _ =&gt; listFields += name -&gt; list
+</span>54 <span style=''></span><span style='background: #AEF1AE'>        }
+</span>55 <span style=''></span><span style='background: #AEF1AE'>      case (_, _: NullValue) =&gt;
+</span>56 <span style=''></span><span style='background: #AEF1AE'>      case (name, value) =&gt;
+</span>57 <span style=''></span><span style='background: #AEF1AE'>        simpleFields += name -&gt; value
+</span>58 <span style=''></span><span style='background: #AEF1AE'>    }</span><span style=''>
+</span>59 <span style=''>    </span><span style='background: #AEF1AE'>(simpleFields.toMap, listFields.toMap, nodeFields.toMap)</span><span style=''>
+</span>60 <span style=''>  }
+</span>61 <span style=''>
+</span>62 <span style=''>  private def valueToNodeMap(from: Value): Map[String, Value] =
+</span>63 <span style=''>    </span><span style='background: #AEF1AE'>from.asMap[Value](v =&gt; v).asScala.toMap</span><span style=''>
+</span>64 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          237
+        </td>
+        <td>
+          703
+          -
+          879
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.map[Option[de.zpro.backend.data.DbResult]](((record: org.neo4j.driver.Record) =&gt; {
+  val fields: scala.collection.immutable.Map[String,org.neo4j.driver.Value] = scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]](record.fields()).asScala.map[(String, org.neo4j.driver.Value)](((e: org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]) =&gt; scala.Predef.ArrowAssoc[String](e.key()).-&gt;[org.neo4j.driver.Value](e.value()))).toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]).filterNot(((x$1: (String, org.neo4j.driver.Value)) =&gt; x$1._2.isNull()));
+  RecordParser.this.processRoot(details, fields)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          229
+        </td>
+        <td>
+          745
+          -
+          760
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Record.fields
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          record.fields()
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          232
+        </td>
+        <td>
+          778
+          -
+          798
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](e.key()).-&gt;[org.neo4j.driver.Value](e.value())
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          231
+        </td>
+        <td>
+          789
+          -
+          798
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.util.Pair.value
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          e.value()
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          230
+        </td>
+        <td>
+          778
+          -
+          785
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.util.Pair.key
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          e.key()
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          233
+        </td>
+        <td>
+          800
+          -
+          800
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]
+        </td>
+      </tr><tr>
+        <td>
+          19
+        </td>
+        <td>
+          235
+        </td>
+        <td>
+          745
+          -
+          837
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.filterNot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]](record.fields()).asScala.map[(String, org.neo4j.driver.Value)](((e: org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]) =&gt; scala.Predef.ArrowAssoc[String](e.key()).-&gt;[org.neo4j.driver.Value](e.value()))).toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]).filterNot(((x$1: (String, org.neo4j.driver.Value)) =&gt; x$1._2.isNull()))
+        </td>
+      </tr><tr>
+        <td>
+          19
+        </td>
+        <td>
+          234
+        </td>
+        <td>
+          825
+          -
+          836
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.isNull
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$1._2.isNull()
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          236
+        </td>
+        <td>
+          844
+          -
+          872
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.processRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.processRoot(details, fields)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          238
+        </td>
+        <td>
+          703
+          -
+          894
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionIterable.collectDefined
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.util.Extensions.OptionIterable[de.zpro.backend.data.DbResult, List, Option](result.map[Option[de.zpro.backend.data.DbResult]](((record: org.neo4j.driver.Record) =&gt; {
+  val fields: scala.collection.immutable.Map[String,org.neo4j.driver.Value] = scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]](record.fields()).asScala.map[(String, org.neo4j.driver.Value)](((e: org.neo4j.driver.util.Pair[String,org.neo4j.driver.Value]) =&gt; scala.Predef.ArrowAssoc[String](e.key()).-&gt;[org.neo4j.driver.Value](e.value()))).toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]).filterNot(((x$1: (String, org.neo4j.driver.Value)) =&gt; x$1._2.isNull()));
+  RecordParser.this.processRoot(details, fields)
+}))).collectDefined
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          241
+        </td>
+        <td>
+          1036
+          -
+          1080
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.processNode
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.processNode(root, RecordParser.this.valueToNodeMap(rootField))
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          240
+        </td>
+        <td>
+          1054
+          -
+          1079
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.valueToNodeMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.valueToNodeMap(rootField)
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          239
+        </td>
+        <td>
+          1008
+          -
+          1017
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.name
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          root.name
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          242
+        </td>
+        <td>
+          997
+          -
+          1081
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Option.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          fields.get(root.name).map[de.zpro.backend.data.DbResult](((rootField: org.neo4j.driver.Value) =&gt; RecordParser.this.processNode(root, RecordParser.this.valueToNodeMap(rootField))))
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          245
+        </td>
+        <td>
+          1213
+          -
+          1213
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Tuple3._3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$2._3
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          244
+        </td>
+        <td>
+          1197
+          -
+          1197
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Tuple3._2
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$2._2
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          243
+        </td>
+        <td>
+          1185
+          -
+          1185
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.Tuple3._1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          x$2._1
+        </td>
+      </tr><tr>
+        <td>
+          29
+        </td>
+        <td>
+          254
+        </td>
+        <td>
+          1254
+          -
+          1537
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.data.DbResult.apply(node.dataType, properties.filter(((x0$1: (String, org.neo4j.driver.Value)) =&gt; x0$1 match {
+  case (_1: String, _2: org.neo4j.driver.Value): (String, org.neo4j.driver.Value)((key @ _), _) =&gt; node.containsSimpleField(key)
+})), listProperties.filter(((x0$2: (String, List[org.neo4j.driver.Value])) =&gt; x0$2 match {
+  case (_1: String, _2: List[org.neo4j.driver.Value]): (String, List[org.neo4j.driver.Value])((key @ _), _) =&gt; node.containsSimpleField(key)
+})), RecordParser.this.processChildNodes(node, childNodes))
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          246
+        </td>
+        <td>
+          1281
+          -
+          1294
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.dataType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.dataType
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          247
+        </td>
+        <td>
+          1352
+          -
+          1381
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.containsSimpleField
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.containsSimpleField(key)
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          249
+        </td>
+        <td>
+          1315
+          -
+          1383
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          properties.filter(((x0$1: (String, org.neo4j.driver.Value)) =&gt; x0$1 match {
+  case (_1: String, _2: org.neo4j.driver.Value): (String, org.neo4j.driver.Value)((key @ _), _) =&gt; node.containsSimpleField(key)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          248
+        </td>
+        <td>
+          1352
+          -
+          1381
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.containsSimpleField
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          node.containsSimpleField(key)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          250
+        </td>
+        <td>
+          1449
+          -
+          1478
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.containsSimpleField
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.containsSimpleField(key)
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          252
+        </td>
+        <td>
+          1408
+          -
+          1480
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOps.filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          listProperties.filter(((x0$2: (String, List[org.neo4j.driver.Value])) =&gt; x0$2 match {
+  case (_1: String, _2: List[org.neo4j.driver.Value]): (String, List[org.neo4j.driver.Value])((key @ _), _) =&gt; node.containsSimpleField(key)
+}))
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          251
+        </td>
+        <td>
+          1449
+          -
+          1478
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          de.zpro.backend.data.RequestObject.containsSimpleField
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.containsSimpleField(key)
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          253
+        </td>
+        <td>
+          1496
+          -
+          1531
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.processChildNodes
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.processChildNodes(node, childNodes)
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          259
+        </td>
+        <td>
+          1742
+          -
+          1876
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](fieldName).-&gt;[Option[List[de.zpro.backend.data.DbResult]]](parent.getChild(fieldName).map[List[de.zpro.backend.data.DbResult]](((childDetails: de.zpro.backend.data.RequestObject) =&gt; childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node))))))
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          258
+        </td>
+        <td>
+          1742
+          -
+          1876
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](fieldName).-&gt;[Option[List[de.zpro.backend.data.DbResult]]](parent.getChild(fieldName).map[List[de.zpro.backend.data.DbResult]](((childDetails: de.zpro.backend.data.RequestObject) =&gt; childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node))))))
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          260
+        </td>
+        <td>
+          1685
+          -
+          1884
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapOps.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          childFields.map[String, Option[List[de.zpro.backend.data.DbResult]]](((x0$1: (String, List[Map[String,org.neo4j.driver.Value]])) =&gt; x0$1 match {
+  case (_1: String, _2: List[Map[String,org.neo4j.driver.Value]]): (String, List[Map[String,org.neo4j.driver.Value]])((fieldName @ _), (childNodes @ _)) =&gt; scala.Predef.ArrowAssoc[String](fieldName).-&gt;[Option[List[de.zpro.backend.data.DbResult]]](parent.getChild(fieldName).map[List[de.zpro.backend.data.DbResult]](((childDetails: de.zpro.backend.data.RequestObject) =&gt; childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node))))))
+}))
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          257
+        </td>
+        <td>
+          1763
+          -
+          1876
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Option.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          parent.getChild(fieldName).map[List[de.zpro.backend.data.DbResult]](((childDetails: de.zpro.backend.data.RequestObject) =&gt; childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node)))))
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          256
+        </td>
+        <td>
+          1820
+          -
+          1875
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node)))
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          255
+        </td>
+        <td>
+          1843
+          -
+          1874
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.processNode
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.processNode(childDetails, node)
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          261
+        </td>
+        <td>
+          1685
+          -
+          1899
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.util.Extensions.OptionMap.collectDefined
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          de.zpro.backend.util.Extensions.OptionMap[String, List[de.zpro.backend.data.DbResult]](childFields.map[String, Option[List[de.zpro.backend.data.DbResult]]](((x0$1: (String, List[Map[String,org.neo4j.driver.Value]])) =&gt; x0$1 match {
+  case (_1: String, _2: List[Map[String,org.neo4j.driver.Value]]): (String, List[Map[String,org.neo4j.driver.Value]])((fieldName @ _), (childNodes @ _)) =&gt; scala.Predef.ArrowAssoc[String](fieldName).-&gt;[Option[List[de.zpro.backend.data.DbResult]]](parent.getChild(fieldName).map[List[de.zpro.backend.data.DbResult]](((childDetails: de.zpro.backend.data.RequestObject) =&gt; childNodes.map[de.zpro.backend.data.DbResult](((node: Map[String,org.neo4j.driver.Value]) =&gt; RecordParser.this.processNode(childDetails, node))))))
+}))).collectDefined
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          262
+        </td>
+        <td>
+          2072
+          -
+          2100
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.Delegate.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.collection.mutable.Map.apply[String, org.neo4j.driver.Value]()
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          263
+        </td>
+        <td>
+          2122
+          -
+          2156
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.Delegate.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.collection.mutable.Map.apply[String, List[org.neo4j.driver.Value]]()
+        </td>
+      </tr><tr>
+        <td>
+          47
+        </td>
+        <td>
+          264
+        </td>
+        <td>
+          2178
+          -
+          2225
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.MapFactory.Delegate.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.collection.mutable.Map.apply[String, List[Map[String,org.neo4j.driver.Value]]]()
+        </td>
+      </tr><tr>
+        <td>
+          48
+        </td>
+        <td>
+          282
+        </td>
+        <td>
+          2230
+          -
+          2631
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          fields.foreach[Any](((x0$1: (String, org.neo4j.driver.Value)) =&gt; x0$1 match {
+  case (_1: String, _2: org.neo4j.driver.Value): (String, org.neo4j.driver.Value)((name @ _), (listValue @ (_: org.neo4j.driver.internal.value.ListValue))) =&gt; {
+    val list: List[org.neo4j.driver.Value] = scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.Value](listValue.asList[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))).asScala.toList;
+    list.headOption match {
+      case (value: org.neo4j.driver.Value): Some[org.neo4j.driver.Value]((_: org.neo4j.driver.internal.value.MapValue)) =&gt; nodeFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[Map[String,org.neo4j.driver.Value]]](list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from)))))
+      case _ =&gt; listFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[org.neo4j.driver.Value]](list))
+    }
+  }
+  case (_1: String, _2: org.neo4j.driver.Value): (String, org.neo4j.driver.Value)(_, (_: org.neo4j.driver.internal.value.NullValue)) =&gt; ()
+  case (_1: String, _2: org.neo4j.driver.Value): (String, org.neo4j.driver.Value)((name @ _), (value @ _)) =&gt; simpleFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[org.neo4j.driver.Value](value))
+}))
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          276
+        </td>
+        <td>
+          2287
+          -
+          2527
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          {
+  val list: List[org.neo4j.driver.Value] = scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.Value](listValue.asList[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))).asScala.toList;
+  list.headOption match {
+    case (value: org.neo4j.driver.Value): Some[org.neo4j.driver.Value]((_: org.neo4j.driver.internal.value.MapValue)) =&gt; nodeFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[Map[String,org.neo4j.driver.Value]]](list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from)))))
+    case _ =&gt; listFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[org.neo4j.driver.Value]](list))
+  }
+}
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          265
+        </td>
+        <td>
+          2309
+          -
+          2340
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.internal.value.ListValue.asList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          listValue.asList[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          266
+        </td>
+        <td>
+          2309
+          -
+          2355
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.jdk.CollectionConverters.ListHasAsScala[org.neo4j.driver.Value](listValue.asList[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))).asScala.toList
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          267
+        </td>
+        <td>
+          2364
+          -
+          2379
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.LinearSeqOps.headOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          list.headOption
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          271
+        </td>
+        <td>
+          2424
+          -
+          2470
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          nodeFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[Map[String,org.neo4j.driver.Value]]](list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from)))))
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          268
+        </td>
+        <td>
+          2455
+          -
+          2469
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.RecordParser.valueToNodeMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          RecordParser.this.valueToNodeMap(from)
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          270
+        </td>
+        <td>
+          2438
+          -
+          2470
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](name).-&gt;[List[Map[String,org.neo4j.driver.Value]]](list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from))))
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          272
+        </td>
+        <td>
+          2424
+          -
+          2470
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          nodeFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[Map[String,org.neo4j.driver.Value]]](list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from)))))
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          269
+        </td>
+        <td>
+          2446
+          -
+          2470
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.immutable.List.map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          list.map[Map[String,org.neo4j.driver.Value]](((from: org.neo4j.driver.Value) =&gt; RecordParser.this.valueToNodeMap(from)))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          274
+        </td>
+        <td>
+          2491
+          -
+          2517
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          listFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[org.neo4j.driver.Value]](list))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          273
+        </td>
+        <td>
+          2505
+          -
+          2517
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](name).-&gt;[List[org.neo4j.driver.Value]](list)
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          275
+        </td>
+        <td>
+          2491
+          -
+          2517
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          listFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[List[org.neo4j.driver.Value]](list))
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          277
+        </td>
+        <td>
+          2557
+          -
+          2559
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          ()
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          278
+        </td>
+        <td>
+          2557
+          -
+          2559
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;nosymbol&gt;
+        </td>
+        <td>
+          de.zpro.backend.data.neo4j.recordparsertest
+        </td>
+        <td style="background: #AEF1AE">
+          ()
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          280
+        </td>
+        <td>
+          2596
+          -
+          2625
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          simpleFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[org.neo4j.driver.Value](value))
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          279
+        </td>
+        <td>
+          2612
+          -
+          2625
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Predef.ArrowAssoc.-&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.ArrowAssoc[String](name).-&gt;[org.neo4j.driver.Value](value)
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          281
+        </td>
+        <td>
+          2596
+          -
+          2625
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.collection.mutable.Growable.+=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          simpleFields.+=(scala.Predef.ArrowAssoc[String](name).-&gt;[org.neo4j.driver.Value](value))
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          286
+        </td>
+        <td>
+          2657
+          -
+          2673
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          listFields.toMap[String, List[org.neo4j.driver.Value]](scala.this.&lt;:&lt;.refl[(String, List[org.neo4j.driver.Value])])
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          289
+        </td>
+        <td>
+          2636
+          -
+          2692
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.Tuple3.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Tuple3.apply[scala.collection.immutable.Map[String,org.neo4j.driver.Value], scala.collection.immutable.Map[String,List[org.neo4j.driver.Value]], scala.collection.immutable.Map[String,List[Map[String,org.neo4j.driver.Value]]]](simpleFields.toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]), listFields.toMap[String, List[org.neo4j.driver.Value]](scala.this.&lt;:&lt;.refl[(String, List[org.neo4j.driver.Value])]), nodeFields.toMap[String, List[Map[String,org.neo4j.driver.Value]]](scala.this.&lt;:&lt;.refl[(String, List[Map[String,org.neo4j.driver.Value]])]))
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          283
+        </td>
+        <td>
+          2650
+          -
+          2650
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          285
+        </td>
+        <td>
+          2668
+          -
+          2668
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, List[org.neo4j.driver.Value])]
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          288
+        </td>
+        <td>
+          2675
+          -
+          2691
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          nodeFields.toMap[String, List[Map[String,org.neo4j.driver.Value]]](scala.this.&lt;:&lt;.refl[(String, List[Map[String,org.neo4j.driver.Value]])])
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          284
+        </td>
+        <td>
+          2637
+          -
+          2655
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          simpleFields.toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)])
+        </td>
+      </tr><tr>
+        <td>
+          59
+        </td>
+        <td>
+          287
+        </td>
+        <td>
+          2686
+          -
+          2686
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, List[Map[String,org.neo4j.driver.Value]])]
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          292
+        </td>
+        <td>
+          2766
+          -
+          2805
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.IterableOnceOps.toMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.jdk.CollectionConverters.MapHasAsScala[String, org.neo4j.driver.Value](from.asMap[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))).asScala.toMap[String, org.neo4j.driver.Value](scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)])
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          291
+        </td>
+        <td>
+          2800
+          -
+          2800
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.&lt;:&lt;.refl
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.this.&lt;:&lt;.refl[(String, org.neo4j.driver.Value)]
+        </td>
+      </tr><tr>
+        <td>
+          63
+        </td>
+        <td>
+          290
+        </td>
+        <td>
+          2766
+          -
+          2791
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.types.MapAccessor.asMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          from.asMap[org.neo4j.driver.Value](((v: org.neo4j.driver.Value) =&gt; v))
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

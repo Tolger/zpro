@@ -1,0 +1,727 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          de/zpro/backend/data/repositories/SearchRepository.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package de.zpro.backend.data.repositories
+</span>2 <span style=''>
+</span>3 <span style=''>import de.zpro.backend.data.{DatabaseRequester, DbResult}
+</span>4 <span style=''>
+</span>5 <span style=''>import scala.concurrent.{ExecutionContext, Future}
+</span>6 <span style=''>
+</span>7 <span style=''>case class SearchRepository(connector: DatabaseRequester)(implicit private val context: ExecutionContext) {
+</span>8 <span style=''>  def quickSearch(query: String): Future[List[QuickSearchResult]] =
+</span>9 <span style=''>    if (</span><span style='background: #AEF1AE'>query.isEmpty</span><span style=''>)
+</span>10 <span style=''>      </span><span style='background: #AEF1AE'>Future.successful(List())</span><span style=''>
+</span>11 <span style=''>    else
+</span>12 <span style=''>      </span><span style='background: #AEF1AE'>connector.quickSearch(expandQuery(query))
+</span>13 <span style=''></span><span style='background: #AEF1AE'>        .map(parseResultList)</span><span style=''>
+</span>14 <span style=''>
+</span>15 <span style=''>  private def expandQuery(baseQuery: String): String =
+</span>16 <span style=''>    if (</span><span style='background: #AEF1AE'>baseQuery.endsWith(&quot;*&quot;)</span><span style=''>) </span><span style='background: #AEF1AE'>baseQuery</span><span style=''>
+</span>17 <span style=''>    else s&quot;$baseQuery ${baseQuery.split(&quot; &quot;).lastOption.map(l =&gt; s&quot;$l*&quot;).getOrElse(&quot;&quot;)}&quot;
+</span>18 <span style=''>
+</span>19 <span style=''>  private def parseResultList(data: List[DbResult]): List[QuickSearchResult] =
+</span>20 <span style=''>    </span><span style='background: #AEF1AE'>data.map(parseResult).sorted</span><span style=''>
+</span>21 <span style=''>
+</span>22 <span style=''>  private def parseResult(result: DbResult): QuickSearchResult = {
+</span>23 <span style=''>    val score = </span><span style='background: #AEF1AE'>result(&quot;score&quot;).asDouble</span><span style=''>
+</span>24 <span style=''>    val node = </span><span style='background: #AEF1AE'>result.getNode(&quot;node&quot;)</span><span style=''>
+</span>25 <span style=''>    </span><span style='background: #AEF1AE'>QuickSearchResult(
+</span>26 <span style=''></span><span style='background: #AEF1AE'>      id = node(&quot;id&quot;).asString,
+</span>27 <span style=''></span><span style='background: #AEF1AE'>      name = node(&quot;fullName&quot;).asString,
+</span>28 <span style=''></span><span style='background: #AEF1AE'>      score = score,
+</span>29 <span style=''></span><span style='background: #AEF1AE'>      nodeType = node.dataType
+</span>30 <span style=''></span><span style='background: #AEF1AE'>    )</span><span style=''>
+</span>31 <span style=''>  }
+</span>32 <span style=''>
+</span>33 <span style=''>}
+</span>34 <span style=''>
+</span>35 <span style=''>case class QuickSearchResult(id: String, name: String, score: Double, nodeType: String) extends Ordered[QuickSearchResult] {
+</span>36 <span style=''>  override def compare(that: QuickSearchResult): Int = </span><span style='background: #AEF1AE'>that.score compareTo this.score</span><span style=''> // reverse order (higher first)
+</span>37 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          9
+        </td>
+        <td>
+          459
+        </td>
+        <td>
+          338
+          -
+          351
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.String.isEmpty
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          query.isEmpty()
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          460
+        </td>
+        <td>
+          377
+          -
+          383
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          scala.collection.immutable.Nil
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.collection.immutable.Nil
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          462
+        </td>
+        <td>
+          359
+          -
+          384
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.successful
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.successful[List[Nothing]](scala.collection.immutable.Nil)
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          461
+        </td>
+        <td>
+          359
+          -
+          384
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          scala.concurrent.Future.successful
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          scala.concurrent.Future.successful[List[Nothing]](scala.collection.immutable.Nil)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          463
+        </td>
+        <td>
+          422
+          -
+          440
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.expandQuery
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.expandQuery(query)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          464
+        </td>
+        <td>
+          410
+          -
+          410
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DatabaseRequester.quickSearch$default$2
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.connector.quickSearch$default$2
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          465
+        </td>
+        <td>
+          455
+          -
+          470
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.parseResultList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.parseResultList(data)
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          468
+        </td>
+        <td>
+          400
+          -
+          471
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.connector.quickSearch(SearchRepository.this.expandQuery(query), SearchRepository.this.connector.quickSearch$default$2).map[List[de.zpro.backend.data.repositories.QuickSearchResult]](((data: List[de.zpro.backend.data.DbResult]) =&gt; SearchRepository.this.parseResultList(data)))(SearchRepository.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          467
+        </td>
+        <td>
+          400
+          -
+          471
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.concurrent.Future.map
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.connector.quickSearch(SearchRepository.this.expandQuery(query), SearchRepository.this.connector.quickSearch$default$2).map[List[de.zpro.backend.data.repositories.QuickSearchResult]](((data: List[de.zpro.backend.data.DbResult]) =&gt; SearchRepository.this.parseResultList(data)))(SearchRepository.this.context)
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          466
+        </td>
+        <td>
+          454
+          -
+          454
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.context
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.context
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          469
+        </td>
+        <td>
+          536
+          -
+          559
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.String.endsWith
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          baseQuery.endsWith(&quot;*&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          470
+        </td>
+        <td>
+          561
+          -
+          570
+        </td>
+        <td>
+          Ident
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.baseQuery
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          baseQuery
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          471
+        </td>
+        <td>
+          653
+          -
+          653
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.String.+
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.searchrepositorytest
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;&quot;.+(baseQuery).+(&quot; &quot;).+(scala.Predef.refArrayOps[String](baseQuery.split(&quot; &quot;)).lastOption.map[String](((l: String) =&gt; &quot;&quot;.+(l).+(&quot;*&quot;))).getOrElse[String](&quot;&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          472
+        </td>
+        <td>
+          753
+          -
+          764
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.SearchRepository.parseResult
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          SearchRepository.this.parseResult(result)
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          474
+        </td>
+        <td>
+          766
+          -
+          766
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.math.LowPriorityOrderingImplicits.ordered
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          math.this.Ordering.ordered[de.zpro.backend.data.repositories.QuickSearchResult](scala.Predef.$conforms[de.zpro.backend.data.repositories.QuickSearchResult])
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          473
+        </td>
+        <td>
+          766
+          -
+          766
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          scala.Predef.$conforms
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.$conforms[de.zpro.backend.data.repositories.QuickSearchResult]
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          475
+        </td>
+        <td>
+          744
+          -
+          772
+        </td>
+        <td>
+          ApplyToImplicitArgs
+        </td>
+        <td>
+          scala.collection.immutable.StrictOptimizedSeqOps.sorted
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          data.map[de.zpro.backend.data.repositories.QuickSearchResult](((result: de.zpro.backend.data.DbResult) =&gt; SearchRepository.this.parseResult(result))).sorted[de.zpro.backend.data.repositories.QuickSearchResult](math.this.Ordering.ordered[de.zpro.backend.data.repositories.QuickSearchResult](scala.Predef.$conforms[de.zpro.backend.data.repositories.QuickSearchResult]))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          476
+        </td>
+        <td>
+          857
+          -
+          881
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asDouble
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.apply(&quot;score&quot;).asDouble()
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          477
+        </td>
+        <td>
+          897
+          -
+          919
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.getNode
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result.getNode(&quot;node&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          481
+        </td>
+        <td>
+          924
+          -
+          1072
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.QuickSearchResult.apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          QuickSearchResult.apply(node.apply(&quot;id&quot;).asString(), node.apply(&quot;fullName&quot;).asString(), score, node.dataType)
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          478
+        </td>
+        <td>
+          954
+          -
+          973
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.apply(&quot;id&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          479
+        </td>
+        <td>
+          988
+          -
+          1013
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          org.neo4j.driver.Value.asString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.apply(&quot;fullName&quot;).asString()
+        </td>
+      </tr><tr>
+        <td>
+          29
+        </td>
+        <td>
+          480
+        </td>
+        <td>
+          1053
+          -
+          1066
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.DbResult.dataType
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          node.dataType
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          483
+        </td>
+        <td>
+          1282
+          -
+          1292
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.QuickSearchResult.score
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          this.score
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          482
+        </td>
+        <td>
+          1261
+          -
+          1271
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          de.zpro.backend.data.repositories.QuickSearchResult.score
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          that.score
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          485
+        </td>
+        <td>
+          1261
+          -
+          1292
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          java.lang.Double.compareTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.double2Double(that.score).compareTo(scala.Predef.double2Double(this.score))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          484
+        </td>
+        <td>
+          1282
+          -
+          1292
+        </td>
+        <td>
+          ApplyImplicitView
+        </td>
+        <td>
+          scala.Predef.double2Double
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          scala.Predef.double2Double(this.score)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
