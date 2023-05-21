@@ -30,7 +30,7 @@ class RecordParserTest extends AnyFlatSpec with should.Matchers {
     result.head should be(DbResult("Test", propertyFields, listFields))
   }
 
-  it should "parse filter out a NULL Record" in {
+  it should "filter out a NULL Record" in {
     val propertyFields = Map(
       "stringField" -> new StringValue("stringValue"),
       "nullField" -> NullValue.NULL
@@ -82,11 +82,14 @@ class RecordParserTest extends AnyFlatSpec with should.Matchers {
       "stringListField" -> List(new StringValue("stringListValue1"), new StringValue("stringListValue2")),
       "numberListField" -> List(new IntegerValue(1), new IntegerValue(2))
     )
+    val nodeFields = Map(
+      "node1FieldName" -> new ListValue(new MapValue(node1Fields.asJava)),
+      "node2FieldName" -> new ListValue(new MapValue(node2Fields.asJava)),
+    )
     val simpleFields: Map[String, Value] = propertyFields ++ toListValue(listFields)
+    val allFields = simpleFields ++ nodeFields
     val fields = Map(
-      "node1" -> new ListValue(new MapValue(node1Fields.asJava)),
-      "node2" -> new ListValue(new MapValue(node2Fields.asJava)),
-      "name" -> new MapValue(simpleFields.asJava)
+      "name" -> new MapValue(allFields.asJava)
     )
     val request = RequestObject("name", None, "Test", simpleFields.keys.toList, List(node1Request, node2Request))
     val dbResult = DbResult("Test", propertyFields, listFields, Map("node1FieldName" -> List(node1DbResult), "node2FieldName" -> List(node2DbResult)))
@@ -120,32 +123,20 @@ class RecordParserTest extends AnyFlatSpec with should.Matchers {
     val node2 = createNode("2", List(node21, node22))
     val node3 = createNode("3", List())
     val node4 = createNode("4", List())
+    val root = createNode("", List(node1, node2, node3, node4))
 
-    val allNodes = List(node11, node12111, node1211, node121, node122, node123, node12, node131, node13,
-      node1, node211, node212, node2131, node2132, node213, node214, node21, node22, node2, node3, node4)
-    val rootNodes = List(node1, node2, node3, node4)
+    def generateFields(node: NodeDetails): Value =
+      new ListValue(new MapValue((node.fields ++
+        node.children.map(c => c.fieldName -> generateFields(c))).asJava))
 
-    val propertyFields = Map(
-      "stringField" -> new StringValue("stringValue"),
-      "numberField" -> new IntegerValue(46)
-    )
-    val listFields = Map(
-      "stringListField" -> List(new StringValue("stringListValue1"), new StringValue("stringListValue2")),
-      "numberListField" -> List(new IntegerValue(1), new IntegerValue(2))
-    )
-    val simpleFields: Map[String, Value] = propertyFields ++ toListValue(listFields)
-    val nodeFields = allNodes.map(n => s"node${n.nameExtension}" -> new ListValue(new MapValue(n.fields.asJava)))
-      .appended("name" -> new MapValue(simpleFields.asJava)).toMap
+    val fields = Map(root.name -> new MapValue((root.fields ++
+      root.children.map(c => c.fieldName -> generateFields(c))).asJava))
+    val record = mapToRecord(fields)
 
-    val fields: Map[String, Value] = simpleFields ++ nodeFields
-    val request = RequestObject("name", None, "Test", simpleFields.keys.toList, rootNodes.map(_.request))
-    val expectedResult = DbResult("Test", propertyFields, listFields, rootNodes.map(n => n.fieldName -> List(n.result)).toMap)
-
-    val records = listToRecords(List(fields))
-    val result = RecordParser.parseResult(records, request)
+    val result = RecordParser.parseResult(List(record), root.request)
 
     result.size should be(1)
-    result.head should be(expectedResult)
+    result.head should be(root.result)
   }
 
   private def toListValue(list: Map[String, List[Value]]): Map[String, ListValue] =
@@ -159,7 +150,7 @@ class RecordParserTest extends AnyFlatSpec with should.Matchers {
     new InternalRecord(keys.toList.asJava, values.toArray)
   }
 
-  private case class NodeDetails(nameExtension: String, fields: Map[String, Value], request: RequestObject, result: DbResult) {
+  private case class NodeDetails(nameExtension: String, fields: Map[String, Value], request: RequestObject, result: DbResult, children: List[NodeDetails]) {
     val name = s"node$nameExtension"
     val fieldName = s"node${nameExtension}FieldName"
     val dataType = s"Node$nameExtension"
@@ -172,6 +163,6 @@ class RecordParserTest extends AnyFlatSpec with should.Matchers {
     )
     val request = RequestObject(s"node$nameExtension", Some(s"node${nameExtension}FieldName"), s"Node$nameExtension", fields.keys.toList, children.map(_.request))
     val result = DbResult(s"Node$nameExtension", fields, Map.empty, children.map(c => s"node${c.nameExtension}FieldName" -> List(c.result)).toMap)
-    NodeDetails(nameExtension, fields, request, result)
+    NodeDetails(nameExtension, fields, request, result, children)
   }
 }

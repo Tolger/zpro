@@ -27,8 +27,18 @@ class ExtensionsTest extends AnyFlatSpec with should.Matchers {
     Set(Some(3), None, Some(97)).sequence should be(None)
   }
 
-  it should "collected the defined entries in an Iterable of Options" in {
+  it should "collect the defined entries in an Iterable of Options" in {
     import de.zpro.backend.util.Extensions.OptionIterable
     Iterable(Some(3), None, Some(97)).collectDefined should be(Iterable(3, 97))
+  }
+
+  it should "return None for an empty String" in {
+    import de.zpro.backend.util.Extensions.OptionString
+    "".toOption should be(None)
+  }
+
+  it should "return Some for a non empty String" in {
+    import de.zpro.backend.util.Extensions.OptionString
+    "test".toOption should be(Some("test"))
   }
 }

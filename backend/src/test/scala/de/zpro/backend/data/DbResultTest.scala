@@ -18,7 +18,7 @@ class DbResultTest extends AnyFlatSpec with should.Matchers {
   it should "return a property list" in {
     val stringListValue = List(new StringValue("e1"), new StringValue("e2"))
     val intListValue = List(new IntegerValue(1), new IntegerValue(42))
-    val dbResult = DbResult(dataType = "Test", propertyLists = Map(
+    val dbResult = DbResult(dataType = "Test", listProperties = Map(
       "stringListKey" -> stringListValue,
       "intListKey" -> intListValue))
     dbResult.getList("stringListKey") should be(stringListValue)

@@ -2,17 +2,17 @@ package de.zpro.backend.data
 
 import org.neo4j.driver.Value
 
-case class DbResult(dataType: String, properties: Map[String, Value] = Map.empty, propertyLists: Map[String, List[Value]] = Map.empty,
+case class DbResult(dataType: String, properties: Map[String, Value] = Map.empty, listProperties: Map[String, List[Value]] = Map.empty,
                     nodes: Map[String, List[DbResult]] = Map.empty) {
   def apply(key: String): Value = properties(key)
 
   def get(key: String): Option[Value] = properties.get(key)
 
-  def getList(key: String): List[Value] = propertyLists(key)
+  def getList(key: String): List[Value] = listProperties(key)
 
-  def getListOption(key: String): Option[List[Value]] = propertyLists.get(key)
+  def getListOption(key: String): Option[List[Value]] = listProperties.get(key)
 
-  def getListOrEmpty(key: String): List[Value] = propertyLists.getOrElse(key, List.empty)
+  def getListOrEmpty(key: String): List[Value] = listProperties.getOrElse(key, List.empty)
 
   def getNode(key: String): DbResult = nodes(key).head
 

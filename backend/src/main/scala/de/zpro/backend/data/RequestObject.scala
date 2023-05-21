@@ -1,7 +1,7 @@
 package de.zpro.backend.data
 
 import de.zpro.backend.exceptions.UnknownChildNameException
-import de.zpro.backend.util.Extensions.TryIterable
+import de.zpro.backend.util.Extensions.{OptionIterable, TryIterable}
 import sangria.schema.ProjectedName
 
 import scala.util.{Failure, Success, Try}
@@ -55,7 +55,14 @@ private object RequestObject extends RequestObjectParser {
 }
 
 case class RequestObject(name: String, fieldName: Option[String], dataType: String,
-                         simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) {
+                         simpleFields: List[String] = List.empty, children: List[RequestObject] = List.empty) { // TODO split into root and child objects
   lazy val allChildren: List[RequestObject] = children ++ children.flatMap(_.allChildren)
   lazy val all: List[RequestObject] = this +: allChildren
+  lazy val childFieldNames: List[String] = children.map(_.fieldName).collectDefined
+
+  def containsSimpleField(fieldName: String): Boolean = simpleFields.contains(fieldName)
+
+  def containsChildField(fieldName: String): Boolean = childFieldNames.contains(fieldName)
+
+  def getChild(fieldName: String): Option[RequestObject] = children.find(_.fieldName.exists(_ == fieldName))
 }

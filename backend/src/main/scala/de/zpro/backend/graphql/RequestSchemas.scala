@@ -22,7 +22,10 @@ private object RequestSchemas extends BaseSchemas {
           resolve = _.value.getNode("litter")),
         Field(name = "owner",
           fieldType = PersonType,
-          resolve = _.value.getNode("owner"))
+          resolve = _.value.getNode("owner")),
+        Field(name = "litters",
+          fieldType = ListType(LitterType),
+          resolve = _.value.getNodeListOrEmpty("litters"))
       ))
     )
 
@@ -35,7 +38,13 @@ private object RequestSchemas extends BaseSchemas {
           resolve = _.value.getNodeListOrEmpty("offspring")),
         Field(name = "kennel",
           fieldType = KennelType,
-          resolve = _.value.getNode("kennel"))
+          resolve = _.value.getNode("kennel")),
+        Field(name = "mother",
+          fieldType = DogType,
+          resolve = _.value.getNode("mother")),
+        Field(name = "father",
+          fieldType = DogType,
+          resolve = _.value.getNode("father"))
       )
     )
 

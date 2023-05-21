@@ -22,6 +22,20 @@ trait Extensions {
       if (coll.exists(_.isEmpty)) None
       else Some(coll.map(_.get))
 
-    def collectDefined: CC[A] = coll.filter(_.isDefined).map(_.get)
+    def collectDefined: CC[A] = coll.collect { case Some(value: A) => value }
+  }
+
+  implicit class OptionMap[K, V](val map: Map[K, Option[V]]) {
+    def sequence: Option[Map[K, V]] =
+      if (map.exists(_._2.isEmpty)) None
+      else Some(map.view.mapValues(_.get).toMap)
+
+    def collectDefined: Map[K, V] = map.collect { case (key, Some(value)) => key -> value }
+  }
+
+  implicit class OptionString(value: String) {
+    def toOption: Option[String] =
+      if (value.isEmpty) None
+      else Some(value)
   }
 }

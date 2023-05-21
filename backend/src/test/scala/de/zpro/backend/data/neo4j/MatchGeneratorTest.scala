@@ -7,7 +7,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 
 class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFactory {
-
   "The MatchGenerator" should "generate a simple match" in {
     val generator = MatchGenerator
     val request = RequestObject("name", None, "Test", List("prop1", "prop2", "prop3"), List())
@@ -15,12 +14,24 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     response.get should be("MATCH (name:Test)")
   }
 
+  it should "generate a simple match with ID" in {
+    val generator = MatchGenerator
+    val request = RequestObject("name", None, "Test", List("prop1", "prop2", "prop3"), List())
+    val id = "dog-id"
+    val response = generator.generateMatchString(request, Some(id))
+    response.get should be(
+      s"""MATCH (name:Test)
+         |WHERE name.id = \"$id\"""".stripMargin)
+  }
+
   it should "match a dogs litter" in {
     val generator = MatchGenerator
     val litter = RequestObject("l", Some("litter"), "Litter", List("prop1", "prop2"), List())
     val request = RequestObject("d", None, "Dog", List("prop3", "prop4"), List(litter))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (d:Dog), (d)-[:BornIn]->(l:Litter)")
+    response.get should be(
+      s"""MATCH (d:Dog)
+         |OPTIONAL MATCH (d)-[:BornIn]->(l:Litter)""".stripMargin)
   }
 
   it should "match a dogs owner" in {
@@ -28,7 +39,9 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val owner = RequestObject("o", Some("owner"), "Person", List("prop1", "prop2"), List())
     val request = RequestObject("d", None, "Dog", List("prop3", "prop4"), List(owner))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (d:Dog), (d)-[:Owner]->(o:Person)")
+    response.get should be(
+      """MATCH (d:Dog)
+        |OPTIONAL MATCH (d)-[:Owner]->(o:Person)""".stripMargin)
   }
 
   it should "match a litters kennel" in {
@@ -36,7 +49,9 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val kennel = RequestObject("k", Some("kennel"), "Kennel", List("prop1", "prop2"), List())
     val request = RequestObject("l", None, "Litter", List("prop3", "prop4"), List(kennel))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (l:Litter), (l)-[:BredBy]->(k:Kennel)")
+    response.get should be(
+      s"""MATCH (l:Litter)
+         |OPTIONAL MATCH (l)-[:BredBy]->(k:Kennel)""".stripMargin)
   }
 
   it should "match a litters parents" in {
@@ -45,7 +60,10 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val father = RequestObject("f", Some("father"), "Dog", List("prop3", "prop4"), List())
     val request = RequestObject("l", None, "Litter", List("prop3", "prop4"), List(mother, father))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (l:Litter), (l)-[:Mother]->(m:Dog), (l)-[:Father]->(f:Dog)")
+    response.get should be(
+      s"""MATCH (l:Litter)
+         |OPTIONAL MATCH (l)-[:Mother]->(m:Dog)
+         |OPTIONAL MATCH (l)-[:Father]->(f:Dog)""".stripMargin)
   }
 
   it should "match a litters offspring" in {
@@ -53,7 +71,9 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val dog = RequestObject("d", Some("offspring"), "Dog", List("prop3", "prop4"), List())
     val request = RequestObject("l", None, "Litter", List("prop3", "prop4"), List(dog))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (l:Litter), (l)<-[:BornIn]-(d:Dog)")
+    response.get should be(
+      s"""MATCH (l:Litter)
+         |OPTIONAL MATCH (l)<-[:BornIn]-(d:Dog)""".stripMargin)
   }
 
   it should "match a kennels litters" in {
@@ -61,7 +81,9 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val litter = RequestObject("l", Some("litters"), "Litter", List("prop1", "prop2"), List())
     val request = RequestObject("k", None, "Kennel", List("prop3", "prop4"), List(litter))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (k:Kennel), (k)<-[:BredBy]-(l:Litter)")
+    response.get should be(
+      s"""MATCH (k:Kennel)
+         |OPTIONAL MATCH (k)<-[:BredBy]-(l:Litter)""".stripMargin)
   }
 
   it should "match a persons dogs" in {
@@ -69,7 +91,9 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val dog = RequestObject("d", Some("dogs"), "Dog", List("prop3", "prop4"), List())
     val request = RequestObject("p", None, "Person", List("prop3", "prop4"), List(dog))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (p:Person), (p)<-[:Owner]-(d:Dog)")
+    response.get should be(
+      s"""MATCH (p:Person)
+         |OPTIONAL MATCH (p)<-[:Owner]-(d:Dog)""".stripMargin)
   }
 
   it should "perform a complex match" in {
@@ -81,7 +105,13 @@ class MatchGeneratorTest extends AnyFlatSpec with should.Matchers with MockFacto
     val owner = RequestObject("o", Some("owner"), "Person", List("o1, o2"), List())
     val request = RequestObject("d", None, "Dog", List("d1, d2"), List(owner, litter))
     val response = generator.generateMatchString(request)
-    response.get should be("MATCH (d:Dog), (d)-[:Owner]->(o:Person), (d)-[:BornIn]->(l:Litter), (l)-[:Mother]->(md:Dog), (md)-[:BornIn]->(ml:Litter), (ml)-[:BredBy]->(mk:Kennel)")
+    response.get should be(
+      s"""MATCH (d:Dog)
+         |OPTIONAL MATCH (d)-[:Owner]->(o:Person)
+         |OPTIONAL MATCH (d)-[:BornIn]->(l:Litter)
+         |OPTIONAL MATCH (l)-[:Mother]->(md:Dog)
+         |OPTIONAL MATCH (md)-[:BornIn]->(ml:Litter)
+         |OPTIONAL MATCH (ml)-[:BredBy]->(mk:Kennel)""".stripMargin)
   }
 
   //  it should "handle complex properties" in {

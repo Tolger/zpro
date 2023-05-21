@@ -4,26 +4,33 @@ import de.zpro.backend.data.RequestObject
 import de.zpro.backend.exceptions.UnknownRelationException
 import de.zpro.backend.util.Extensions.TryIterable
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Properties, Success, Try}
 
 private trait MatchGenerator {
-  def generateMatchString(from: RequestObject): Try[String]
+  def generateMatchString(from: RequestObject, id: Option[String] = None): Try[String]
 }
 
 private object MatchGenerator extends MatchGenerator {
-  override def generateMatchString(from: RequestObject): Try[String] =
-    processNode(from).map(nodes => s"MATCH $nodes")
+  override def generateMatchString(from: RequestObject, id: Option[String]): Try[String] =
+    handleChildren(from).map(children =>
+      (singleNode(from) +: id.map(id => s"WHERE ${from.name}.id = \"$id\"") ++: children).mkString("MATCH ", Properties.lineSeparator, "")
+    )
 
-  private def processNode(node: RequestObject, parent: Option[RequestObject] = None): Try[String] =
-    (fromObject(node, parent) +: node.children.map(processNode(_, Some(node))))
-      .sequence.map(_.mkString(", "))
+  private def processNode(node: RequestObject, parent: RequestObject): Try[List[String]] =
+    fromObject(node, parent)
+      .flatMap(root => handleChildren(node)
+        .map(children => root +: children))
 
-  private def fromObject(node: RequestObject, parent: Option[RequestObject]): Try[String] =
-    handleParent(parent, node).map(_ + singleNode(node))
 
-  private def handleParent(parent: Option[RequestObject], child: RequestObject): Try[String] =
-    parent.map(parent => parentConnection(parent, Relation(parent.dataType, child.dataType, child.fieldName.get)))
-      .getOrElse(Success(""))
+  private def handleChildren(parent: RequestObject): Try[List[String]] =
+    parent.children.map(processNode(_, parent))
+      .sequence.map(_.flatten)
+
+  private def fromObject(node: RequestObject, parent: RequestObject): Try[String] =
+    handleParent(parent, node).map(relation => s"OPTIONAL MATCH $relation${singleNode(node)}")
+
+  private def handleParent(parent: RequestObject, child: RequestObject): Try[String] =
+    parentConnection(parent, Relation(parent.dataType, child.dataType, child.fieldName.get))
 
   private def parentConnection(connectedParent: RequestObject, relation: Relation): Try[String] =
     generate(relation).map(relation => s"(${connectedParent.name})$relation")
@@ -34,6 +41,7 @@ private object MatchGenerator extends MatchGenerator {
   private def generate(relation: Relation): Try[String] = relation match {
     case Relation("Dog", "Litter", "litter") => Success("-[:BornIn]->")
     case Relation("Dog", "Person", "owner") => Success("-[:Owner]->")
+    case Relation("Dog", "Litter", "litters") => Success("<-[:Mother|Father]-")
     case Relation("Litter", "Kennel", "kennel") => Success("-[:BredBy]->")
     case Relation("Litter", "Dog", "offspring") => Success("<-[:BornIn]-")
     case Relation("Litter", "Dog", "mother") => Success("-[:Mother]->")
