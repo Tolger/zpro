@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rate="89.47" version="1.0" timestamp="1684664000138">
+statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rate="89.47" version="1.0" timestamp="1684764224522">
     <packages>
         <package name="de.zpro.backend.data" statement-count="54" statements-invoked="54" statement-rate="100.00">
             <classes>
@@ -346,67 +346,67 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                         name="de.zpro.backend.data.neo4j/MapComprehensionGenerator/relation" statement-count="21" statements-invoked="6" statement-rate="28.57" branch-rate="30.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1540" end="1562" line="38" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1549" end="1571" line="38" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1913" end="1936" line="43" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1922" end="1945" line="43" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1989" end="2012" line="44" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1998" end="2021" line="44" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1694" end="1717" line="40" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1703" end="1726" line="40" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2104" end="2202" line="46" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2113" end="2211" line="46" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1769" end="1792" line="41" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1778" end="1801" line="41" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1469" end="1492" line="37" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1478" end="1501" line="37" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2059" end="2081" line="45" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2068" end="2090" line="45" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1769" end="1792" line="41" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1778" end="1801" line="41" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1841" end="1864" line="42" branch="true" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1850" end="1873" line="42" branch="true" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2096" end="2203" line="46" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2105" end="2212" line="46" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1540" end="1562" line="38" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1549" end="1571" line="38" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1989" end="2012" line="44" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1998" end="2021" line="44" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1612" end="1642" line="39" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1621" end="1651" line="39" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1913" end="1936" line="43" branch="true" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1922" end="1945" line="43" branch="true" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1694" end="1717" line="40" branch="true" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1703" end="1726" line="40" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2059" end="2081" line="45" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2068" end="2090" line="45" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2096" end="2203" line="46" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="2105" end="2212" line="46" branch="false" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1469" end="1492" line="37" branch="true" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1478" end="1501" line="37" branch="true" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1841" end="1864" line="42" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1850" end="1873" line="42" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1612" end="1642" line="39" branch="false" invocation-count="0" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="relation" start="1621" end="1651" line="39" branch="false" invocation-count="0" ignored="false">
 </statement>
                             </statements>
 </method>
@@ -414,19 +414,19 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                         name="de.zpro.backend.data.neo4j/MapComprehensionGenerator/buildPattern" statement-count="5" statements-invoked="5" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1125" end="1139" line="30" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1134" end="1148" line="30" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1090" end="1238" line="31" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1099" end="1247" line="31" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1108" end="1123" line="30" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1117" end="1132" line="30" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1099" end="1161" line="30" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1108" end="1170" line="30" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1141" end="1160" line="30" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildPattern" start="1150" end="1169" line="30" branch="false" invocation-count="1" ignored="false">
 </statement>
                             </statements>
 </method>
@@ -434,16 +434,16 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                         name="de.zpro.backend.data.neo4j/MapComprehensionGenerator/buildChildren" statement-count="4" statements-invoked="4" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="804" end="988" line="23" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="804" end="997" line="23" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="837" end="987" line="24" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="837" end="996" line="24" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="890" end="986" line="25" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="890" end="995" line="25" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="804" end="997" line="27" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="buildChildren" start="804" end="1006" line="27" branch="false" invocation-count="1" ignored="false">
 </statement>
                             </statements>
 </method>
@@ -451,10 +451,10 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                         name="de.zpro.backend.data.neo4j/MapComprehensionGenerator/printSimpleFields" statement-count="2" statements-invoked="2" statement-rate="100.00" branch-rate="100.00">
                             <statements>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="printSimpleFields" start="1313" end="1344" line="34" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="printSimpleFields" start="1322" end="1353" line="34" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="printSimpleFields" start="1339" end="1343" line="34" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="MapComprehensionGenerator" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.MapComprehensionGenerator" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/MapComprehensionGenerator.scala" method="printSimpleFields" start="1348" end="1352" line="34" branch="false" invocation-count="1" ignored="false">
 </statement>
                             </statements>
 </method>
@@ -693,7 +693,7 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateFields" start="2650" end="2650" line="59" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateFields" start="2491" end="2517" line="53" branch="false" invocation-count="1" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateFields" start="2491" end="2517" line="53" branch="false" invocation-count="2" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="separateFields" start="2557" end="2559" line="55" branch="false" invocation-count="1" ignored="false">
@@ -787,7 +787,7 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1197" end="1197" line="28" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1496" end="1531" line="33" branch="false" invocation-count="2" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1496" end="1531" line="33" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1352" end="1381" line="31" branch="false" invocation-count="1" ignored="false">
@@ -808,7 +808,7 @@ statement-count="514" statements-invoked="497" statement-rate="96.69" branch-rat
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1281" end="1294" line="30" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1352" end="1381" line="31" branch="true" invocation-count="2" ignored="false">
+                                package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1352" end="1381" line="31" branch="true" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
                                 package="de.zpro.backend.data.neo4j" class="RecordParser" class-type="Object" full-class-name="de.zpro.backend.data.neo4j.RecordParser" source="/home/runner/work/zpro/zpro/backend/src/main/scala/de/zpro/backend/data/neo4j/RecordParser.scala" method="processNode" start="1449" end="1478" line="32" branch="true" invocation-count="1" ignored="false">
