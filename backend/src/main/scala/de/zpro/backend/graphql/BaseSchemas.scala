@@ -45,8 +45,8 @@ private trait BaseSchemas {
     interfaces = interfaces[Unit, DbResult](HasIdAndNameType),
     fields = fields(
       Field(name = "date",
-        fieldType = LongType,
-        resolve = _.value("date").asLong),
+        fieldType = OptionType(LongType),
+        resolve = _.value.get("date").map(_.asLong)),
       Field(name = "initials",
         fieldType = StringType,
         resolve = _.value("initials").asString)
