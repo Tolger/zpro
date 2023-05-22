@@ -61,17 +61,17 @@ private trait BaseSchemas {
         fieldType = StringType,
         resolve = _.value("gender").asString),
       Field(name = "pc",
-        fieldType = FloatType,
-        resolve = _.value("pc").asDouble),
+        fieldType = OptionType(FloatType),
+        resolve = _.value.get("pc").map(_.asDouble)),
       Field(name = "pcUnique",
-        fieldType = FloatType,
-        resolve = _.value("pcUnique").asDouble),
+        fieldType = OptionType(IntType),
+        resolve = _.value.get("pcUnique").map(_.asInt)),
       Field(name = "pcAll",
-        fieldType = FloatType,
-        resolve = _.value("pcAll").asDouble),
+        fieldType = OptionType(IntType),
+        resolve = _.value.get("pcAll").map(_.asInt)),
       Field(name = "coi",
-        fieldType = FloatType,
-        resolve = _.value("coi").asDouble)
+        fieldType = OptionType(FloatType),
+        resolve = _.value.get("coi").map(_.asDouble))
     )
   )
 

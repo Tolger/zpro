@@ -23,7 +23,7 @@ private object MapComprehensionGenerator extends MapComprehensionGenerator {
     node.children.map(child =>
       buildPattern(node, child).flatMap(pattern =>
         generateNode(child).map(childObj =>
-          s"${child.name}: [$pattern | $childObj]"
+          s"${child.fieldName.get}: [$pattern | $childObj]"
         ))).sequence
 
   private def buildPattern(parent: RequestObject, child: RequestObject): Try[String] =

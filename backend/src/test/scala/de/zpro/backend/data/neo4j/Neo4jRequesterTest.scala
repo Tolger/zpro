@@ -209,7 +209,7 @@ class Neo4jRequesterTest extends AnyFlatSpec with should.Matchers with MockFacto
     val databaseRequest =
       s"""MATCH (d:Dog)
          |WHERE d.id = \"$id\"
-         |RETURN d {.prop7,.prop8,l: [(d)-[:BornIn]->(l:Litter) | l {.prop5,.prop6,m: [(l)-[:Mother]->(m:Dog) | m {.pc,.prop2}],f: [(l)-[:Father]->(f:Dog) | f {.prop3,.prop4}]}]}""".stripMargin
+         |RETURN d {.prop7,.prop8,litter: [(d)-[:BornIn]->(l:Litter) | l {.prop5,.prop6,mother: [(l)-[:Mother]->(m:Dog) | m {.pc,.prop2}],father: [(l)-[:Father]->(f:Dog) | f {.prop3,.prop4}]}]}""".stripMargin
     (connection.executeRequest _).expects(databaseRequest).returns(Future.successful(response)).once()
 
     val requestFuture = requester.getNodeById(request, id)
